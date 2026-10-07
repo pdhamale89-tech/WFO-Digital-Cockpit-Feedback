@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { dayEndIso, dayStartIso } from '@/lib/utils'
 import type {
-  Business, DashboardOption, Feedback, FeedbackHistoryEntry, FeedbackQuery, FeedbackStats, Owner, Priority, SortField, Status,
+  Business, DashboardOption, Feedback, FeedbackHistoryEntry, FeedbackQuery, FeedbackStats, Owner, Assignee, Priority, SortField, Status,
 } from '@/types'
 import type { FeedbackFormValues } from '@/lib/schemas'
 import { removeScreenshot, uploadScreenshot } from './storageService'
@@ -102,6 +102,7 @@ export async function createFeedback(
       changes_required: values.changes_required.trim(),
       priority: values.priority,
       owner: values.owner || null,
+      sub_owner: values.assignee || null,
       screenshot_path: screenshotPath,
       reported_by: userId, // must equal auth.uid(); enforced by RLS + trigger
     })
@@ -212,6 +213,29 @@ export async function setOwnerActive(id: string, active: boolean): Promise<void>
 
 export async function deleteOwner(id: string): Promise<void> {
   const { error } = await supabase.from('owners').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function listAssignees(includeInactive = false): Promise<Assignee[]> {
+  let q = supabase.from('assignees').select('*').order('sort_order').order('name')
+  if (!includeInactive) q = q.eq('active', true)
+  const { data, error } = await q
+  if (error) throw error
+  return (data ?? []) as Assignee[]
+}
+
+export async function addAssignee(name: string): Promise<void> {
+  const { error } = await supabase.from('assignees').insert({ name: name.trim() })
+  if (error) throw error
+}
+
+export async function setAssigneeActive(id: string, active: boolean): Promise<void> {
+  const { error } = await supabase.from('assignees').update({ active }).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteAssignee(id: string): Promise<void> {
+  const { error } = await supabase.from('assignees').delete().eq('id', id)
   if (error) throw error
 }
 

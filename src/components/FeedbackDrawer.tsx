@@ -12,6 +12,7 @@ import type { Feedback, FeedbackType, Priority, Status } from '@/types'
 import { AuditTimeline } from './AuditTimeline'
 import { ConfirmDialog } from './ConfirmDialog'
 import { FormField } from './FormField'
+import { SearchableSelect } from './SearchableSelect'
 import { Overlay } from './Overlay'
 import { ScreenshotViewer, useSignedUrl } from './ScreenshotViewer'
 import { PriorityBadge, StatusBadge } from './StatusBadge'
@@ -21,6 +22,7 @@ interface Props {
   feedbackId: string | null
   mode: 'admin' | 'user'
   owners?: string[]
+  assignees?: string[]
   onClose: () => void
   /** Called after any change/delete so the list can refresh */
   onChanged: () => void
@@ -35,16 +37,16 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-export function FeedbackDrawer({ feedbackId, mode, owners = [], onClose, onChanged }: Props) {
+export function FeedbackDrawer({ feedbackId, mode, owners = [], assignees = [], onClose, onChanged }: Props) {
   const open = feedbackId !== null
   return (
     <Overlay open={open} onClose={onClose} label="Feedback details" variant="drawer">
-      {feedbackId && <DrawerBody key={feedbackId} id={feedbackId} mode={mode} owners={owners} onClose={onClose} onChanged={onChanged} />}
+      {feedbackId && <DrawerBody key={feedbackId} id={feedbackId} mode={mode} owners={owners} assignees={assignees} onClose={onClose} onChanged={onChanged} />}
     </Overlay>
   )
 }
 
-function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode: 'admin' | 'user'; owners: string[]; onClose: () => void; onChanged: () => void }) {
+function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: string; mode: 'admin' | 'user'; owners: string[]; assignees: string[]; onClose: () => void; onChanged: () => void }) {
   const { toast } = useToast()
   const detail = useAsync(() => getFeedback(id), [id])
   const history = useAsync(() => (mode === 'admin' ? getHistory(id) : Promise.resolve([])), [id, mode])
@@ -231,7 +233,8 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField label="Sub owner name" htmlFor="a-subowner">
-                    <input id="a-subowner" className="field-input" maxLength={120} value={draft.sub_owner} onChange={(e) => setDraft({ ...draft, sub_owner: e.target.value })} />
+                    <SearchableSelect id="a-subowner" value={draft.sub_owner} onChange={(v) => setDraft({ ...draft, sub_owner: v })}
+                      options={[...new Set([...(fb.sub_owner ? [fb.sub_owner] : []), ...assignees])]} placeholder="Search assignee…" emptyLabel="No assignees found" />
                   </FormField>
                   <FormField label="ETA" htmlFor="a-eta">
                     <input id="a-eta" type="date" className="field-input" value={draft.eta} onChange={(e) => setDraft({ ...draft, eta: e.target.value })} />

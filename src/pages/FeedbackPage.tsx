@@ -1,10 +1,10 @@
 import { FeedbackForm } from '@/components/FeedbackForm'
 import { ErrorState, LoadingState } from '@/components/States'
 import { useAsync } from '@/hooks/useAsync'
-import { getScreenshotRequired, listDashboardOptions, listOwners } from '@/services/feedbackService'
+import { getScreenshotRequired, listAssignees, listDashboardOptions, listOwners } from '@/services/feedbackService'
 
 export function FeedbackPage() {
-  const cfg = useAsync(async () => ({ required: await getScreenshotRequired(), options: await listDashboardOptions(), owners: (await listOwners()).map((o) => o.name) }), [])
+  const cfg = useAsync(async () => ({ required: await getScreenshotRequired(), options: await listDashboardOptions(), owners: (await listOwners()).map((o) => o.name), assignees: (await listAssignees()).map((a) => a.name) }), [])
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-5 rounded-xl border border-border bg-brand-soft p-5">
@@ -16,7 +16,7 @@ export function FeedbackPage() {
       </div>
       {cfg.loading ? <LoadingState variant="table" rows={5} />
         : cfg.error ? <ErrorState message={cfg.error} onRetry={cfg.reload} />
-        : <FeedbackForm screenshotRequired={cfg.data?.required ?? true} dashboardOptions={cfg.data?.options ?? []} owners={cfg.data?.owners ?? []} />}
+        : <FeedbackForm screenshotRequired={cfg.data?.required ?? true} dashboardOptions={cfg.data?.options ?? []} owners={cfg.data?.owners ?? []} assignees={cfg.data?.assignees ?? []} />}
     </div>
   )
 }

@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { toUserMessage } from '@/lib/errors'
 import {
-  addAdminEmail, addOwner, deleteOwner, getScreenshotRequired, listAdminEmails, listOwners,
+  addAdminEmail, addAssignee, addOwner, deleteAssignee, deleteOwner, listAssignees, setAssigneeActive, getScreenshotRequired, listAdminEmails, listOwners,
   removeAdminEmail, setOwnerActive, setScreenshotRequired, updateProfileName,
 } from '@/services/feedbackService'
 
@@ -97,6 +97,55 @@ function OwnersCard() {
   )
 }
 
+function AssigneesCard() {
+  const { toast } = useToast()
+  const list = useAsync(() => listAssignees(true), [])
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null)
+
+  const run = async (fn: () => Promise<void>, ok: string) => {
+    setBusy(true)
+    try { await fn(); list.reload(); toast('success', ok) }
+    catch (e) { toast('error', 'Action failed', toUserMessage(e, 'Could not complete the action. The name may already exist.')) }
+    finally { setBusy(false); setToDelete(null) }
+  }
+
+  return (
+    <section className="card p-5" aria-labelledby="s-assignees">
+      <h2 id="s-assignees" className="text-sm font-semibold">Assignees</h2>
+      <p className="mb-3 text-subtle">
+        People shown in the searchable "Assign feedback to" dropdown on the feedback form. The choice appears as Sub Owner Name in the table.
+      </p>
+      <form className="mb-3 flex gap-2 sm:max-w-md" onSubmit={(e) => { e.preventDefault(); if (name.trim()) void run(async () => { await addAssignee(name); setName('') }, 'Assignee added') }}>
+        <label htmlFor="as-new" className="sr-only">New assignee name</label>
+        <input id="as-new" className="field-input" placeholder="Add assignee name" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+        <button className="btn-primary" disabled={busy || !name.trim()}><Plus className="h-4 w-4" /> Add</button>
+      </form>
+      {list.loading && !list.data ? <LoadingState variant="table" rows={3} />
+        : list.error ? <ErrorState message={list.error} onRetry={list.reload} />
+        : (list.data ?? []).length === 0 ? <p className="text-subtle">No assignees yet. Add the first one above.</p>
+        : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {(list.data ?? []).map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className={a.active ? '' : 'text-subtle line-through'}>{a.name}</span>
+                <span className="flex items-center gap-1">
+                  <button className="btn-secondary btn-sm" disabled={busy} onClick={() => void run(() => setAssigneeActive(a.id, !a.active), a.active ? 'Assignee deactivated' : 'Assignee activated')}>
+                    {a.active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button className="btn-ghost btn-sm text-red-600" disabled={busy} aria-label={`Delete ${a.name}`} onClick={() => setToDelete(a)}><Trash2 className="h-4 w-4" /></button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      <ConfirmDialog open={!!toDelete} danger busy={busy} title="Delete assignee?" message={`“${toDelete?.name}” will be removed from the dropdown. Existing feedback keeps its saved name.`}
+        confirmLabel="Delete" onCancel={() => setToDelete(null)} onConfirm={() => toDelete && void run(() => deleteAssignee(toDelete.id), 'Assignee deleted')} />
+    </section>
+  )
+}
+
 function ScreenshotCard() {
   const { toast } = useToast()
   const cfg = useAsync(getScreenshotRequired, [])
@@ -167,7 +216,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-4">
       <PageHeader title={isAdmin ? 'Settings' : 'Profile'} subtitle={isAdmin ? 'Portal configuration and your profile.' : 'Your account details.'} />
       <ProfileCard />
-      {isAdmin && <><ScreenshotCard /><DashboardOptionsCard /><OwnersCard /><AdminsCard /></>}
+      {isAdmin && <><ScreenshotCard /><DashboardOptionsCard /><OwnersCard /><AssigneesCard /><AdminsCard /></>}
     </div>
   )
 }

@@ -49,6 +49,7 @@ npm run lint && npm test && npm run test:db && npm run build
    - `supabase/migrations/004_dashboard_options.sql` – Business dropdown tree
    - `supabase/migrations/005_owner_admins.sql` – owners must be admins; Owner dropdown on the form
    - `supabase/migrations/006_tracking_fields.sql` – Sub owner, ETA, Challenges columns (admin-edited)
+   - `supabase/migrations/007_assignees.sql` – assignee list for the searchable "Assign feedback to" dropdown (stored as Sub Owner Name)
 3. Authentication → Providers: enable Email. Decide whether to require email confirmation. If you do not want self sign-up, disable "Allow new users to sign up" and create users in the dashboard.
 4. Designate the admin(s): edit and run `supabase/seed/make_admin.sql`.
 5. (Dev/staging only) `supabase/seed/demo_seed.sql` inserts three clearly marked `[DEMO]` rows. **Never run on production.**
@@ -98,7 +99,7 @@ SPA routing on Pages uses the `public/404.html` redirect fallback (assumes a pro
 
 ## Admin configuration
 
-Add admins with `make_admin.sql` or Settings → Administrators. Manage owners and the "screenshot required" toggle in Settings. Owners are picked from the administrator list (the database rejects non-admins) and appear in the Owner dropdown of the feedback form; removing someone's admin access deactivates them as an owner.
+Add admins with `make_admin.sql` or Settings → Administrators. Manage owners and the "screenshot required" toggle in Settings. Assignees (Settings → Assignees) feed the searchable "Assign feedback to" dropdown. Owners are picked from the administrator list (the database rejects non-admins) and appear in the Owner dropdown of the feedback form; removing someone's admin access deactivates them as an owner.
 
 ## Workflows
 

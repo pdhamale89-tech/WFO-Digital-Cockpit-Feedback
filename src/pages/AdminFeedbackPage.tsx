@@ -12,7 +12,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useFeedbackList } from '@/hooks/useFeedbackList'
 import { useToast } from '@/hooks/useToast'
 import { toUserMessage } from '@/lib/errors'
-import { getStats, listAllForExport, listOwners } from '@/services/feedbackService'
+import { getStats, listAllForExport, listAssignees, listOwners } from '@/services/feedbackService'
 import { downloadText, toCsv, toExcelHtml } from '@/utils/export'
 import type { Feedback } from '@/types'
 
@@ -30,6 +30,7 @@ export function AdminFeedbackPage() {
   const { toast } = useToast()
   const list = useFeedbackList()
   const owners = useAsync(() => listOwners(), [])
+  const assignees = useAsync(() => listAssignees(), [])
   const stats = useAsync(getStats, [])
   const [shot, setShot] = useState<Feedback | null>(null)
   const [exporting, setExporting] = useState<'csv' | 'xls' | null>(null)
@@ -100,7 +101,7 @@ export function AdminFeedbackPage() {
         emptyTitle="No feedback submitted yet." emptyDescription="Reported issues will appear here."
       />
 
-      <FeedbackDrawer feedbackId={id ?? null} mode="admin" owners={(owners.data ?? []).map((o) => o.name)} onClose={closeDrawer} onChanged={refresh} />
+      <FeedbackDrawer feedbackId={id ?? null} mode="admin" assignees={(assignees.data ?? []).map((a) => a.name)} owners={(owners.data ?? []).map((o) => o.name)} onClose={closeDrawer} onChanged={refresh} />
       <ScreenshotViewer path={shot?.screenshot_path ?? null} title={shot?.feedback_number ?? ''} onClose={() => setShot(null)} />
     </div>
   )

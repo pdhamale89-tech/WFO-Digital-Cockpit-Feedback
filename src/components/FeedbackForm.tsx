@@ -12,15 +12,16 @@ import { useToast } from '@/hooks/useToast'
 import { FormField, FormSection } from './FormField'
 import { ScreenshotUploader } from './ScreenshotUploader'
 import { DashboardPathSelect } from './DashboardPathSelect'
+import { SearchableSelect } from './SearchableSelect'
 import { PATH_SEPARATOR, pathNames } from '@/utils/tree'
 import type { DashboardOption } from '@/types'
 
 const DEFAULTS: Partial<FeedbackFormValues> = {
   business: undefined, dashboard_ids: [], component_category: undefined, card_graph_name: '', feedback_type: undefined,
-  changes_required: '', owner: '', priority: 'Medium', screenshot: null,
+  changes_required: '', owner: '', assignee: '', priority: 'Medium', screenshot: null,
 }
 
-export function FeedbackForm({ screenshotRequired, dashboardOptions, owners = [] }: { screenshotRequired: boolean; dashboardOptions: DashboardOption[]; owners?: string[] }) {
+export function FeedbackForm({ screenshotRequired, dashboardOptions, owners = [], assignees = [] }: { screenshotRequired: boolean; dashboardOptions: DashboardOption[]; owners?: string[]; assignees?: string[] }) {
   const { profile } = useAuth()
   const { toast } = useToast()
   const schema = useMemo(() => buildFeedbackSchema(screenshotRequired, dashboardOptions), [screenshotRequired, dashboardOptions])
@@ -120,6 +121,12 @@ export function FeedbackForm({ screenshotRequired, dashboardOptions, owners = []
               <option value="">Not sure / unassigned</option>
               {owners.map((o) => <option key={o}>{o}</option>)}
             </select>
+          </FormField>
+          <FormField label="Assign feedback to" htmlFor="assignee" error={errors.assignee?.message} hint="Optional. Type to search the assignee list.">
+            <Controller control={control} name="assignee" render={({ field }) => (
+              <SearchableSelect id="assignee" className="sm:max-w-xs" value={field.value ?? ''} onChange={field.onChange} options={assignees}
+                placeholder="Search assignee…" emptyLabel="No assignees found" />
+            )} />
           </FormField>
           <FormField label="Changes required" htmlFor="changes_required" required error={errors.changes_required?.message}>
             <textarea id="changes_required" rows={6} maxLength={5000} className="field-input resize-y"

@@ -62,6 +62,13 @@ export interface Owner {
   sort_order: number
 }
 
+export interface Assignee {
+  id: string
+  name: string
+  active: boolean
+  sort_order: number
+}
+
 export interface CountItem { name: string; count: number }
 export interface TrendItem { week: string; count: number }
 
