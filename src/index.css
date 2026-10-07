@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 244 246 248;
+  --surface: 255 255 255;
+  --muted: 240 242 245;
+  --border: 217 222 229;
+  --fg: 23 28 36;
+  --subtle: 94 104 120;
+  --brand: 0 99 184;       /* enterprise blue */
+  --brand-fg: 255 255 255;
+  --brand-soft: 229 240 250;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 14 17 22;
+  --surface: 24 28 35;
+  --muted: 32 37 46;
+  --border: 52 59 71;
+  --fg: 235 238 243;
+  --subtle: 148 158 174;
+  --brand: 76 162 235;
+  --brand-fg: 8 14 22;
+  --brand-soft: 20 40 62;
+  color-scheme: dark;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-bg text-fg font-sans antialiased text-sm;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-1 ring-offset-surface;
+  }
+  ::selection { background: rgb(var(--brand) / 0.25); }
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-border bg-surface shadow-sm; }
+  .field-label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-subtle; }
+  .field-input {
+    @apply w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-subtle/70
+           disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-red-500;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold transition-colors
+           disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary { @apply btn bg-brand text-brand-fg hover:opacity-90; }
+  .btn-secondary { @apply btn border border-border bg-surface text-fg hover:bg-muted; }
+  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
+  .btn-ghost { @apply btn text-subtle hover:bg-muted hover:text-fg; }
+  .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+}
+
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--muted)) 25%, rgb(var(--border)) 50%, rgb(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  @apply rounded-md;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
