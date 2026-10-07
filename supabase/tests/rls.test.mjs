@@ -16,7 +16,7 @@ create function storage.foldername(name text) returns text[] language sql as $$ 
 grant usage on schema public, auth, storage to anon, authenticated;
 grant select, insert, delete on storage.objects to authenticated;
 `)
-for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
+for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
 // default Supabase privileges for public schema
 await db.exec(`grant usage on schema public to anon, authenticated; grant usage on sequence public.feedback_number_seq to authenticated;
 grant all on all tables in schema public to authenticated;`)
@@ -33,14 +33,21 @@ const as = async (uid, sql, params) => {
 await db.exec(`insert into public.admin_emails values ('boss@x.com')`)
 const mk = async (email) => (await db.query(`insert into auth.users (email) values ($1) returning id`, [email])).rows[0].id
 const boss = await mk('boss@x.com'), alice = await mk('alice@x.com'), bob = await mk('bob@x.com')
+const own1 = await as(boss, `insert into public.owners (email) values ('Boss@X.com') returning name, email`)
+ok('admin can add an admin as owner (email lower-cased, name from profile)', own1.r?.rows[0]?.email === 'boss@x.com', JSON.stringify(own1))
+const own2 = await as(boss, `insert into public.owners (email) values ('alice@x.com')`)
+ok('non-admin cannot be added as owner', !!own2.e, JSON.stringify(own2))
+const own3 = await as(boss, `insert into public.owners (name) values ('Free Text')`)
+ok('owner without admin email rejected', !!own3.e, JSON.stringify(own3))
+const ownName = own1.r?.rows[0]?.name
 const roles = (await db.query(`select email, role from public.profiles order by email`)).rows
 ok('admin email gets admin role, others user', roles.find(r => r.email === 'boss@x.com').role === 'admin' && roles.filter(r => r.role === 'user').length === 2, JSON.stringify(roles))
 
 const ins = (uid, extra = {}) => as(uid, `insert into public.feedback (business, component_category, card_graph_name, feedback_type, changes_required, screenshot_path, reported_by, status, owner, priority)
   values ('Remote','KPI Card','Contact Volume','Data Issue','Count differs', $1, $2, $3, $4, 'High') returning feedback_number, status, owner, reported_by_email`,
-  [extra.path ?? `${uid}/a.png`, extra.by ?? uid, extra.status ?? 'Completed', extra.owner ?? 'Hacker'])
+  [extra.path ?? `${uid}/a.png`, extra.by ?? uid, extra.status ?? 'Completed', extra.owner ?? null])
 const a1 = await ins(alice)
-ok('user can insert own feedback; triggers force status=New, owner=null, email from profile', a1.r?.rows[0]?.status === 'New' && a1.r.rows[0].owner === null && a1.r.rows[0].reported_by_email === 'alice@x.com', a1.e)
+ok('user can insert own feedback; triggers force status=New, email from profile', a1.r?.rows[0]?.status === 'New' && a1.r.rows[0].owner === null && a1.r.rows[0].reported_by_email === 'alice@x.com', a1.e)
 ok('feedback_number generated WF-0001', a1.r?.rows[0]?.feedback_number === 'WF-0001')
 const imp = await ins(alice, { by: bob })
 ok('user cannot impersonate another reporter (forced to own id, no error leak)', imp.r?.rows[0]?.reported_by_email === 'alice@x.com' || !!imp.e, JSON.stringify(imp))
@@ -76,8 +83,8 @@ const st1 = await as(alice, `select public.admin_feedback_stats()`)
 ok('stats RPC forbidden for users', !!st1.e)
 
 // Admin workflow
-const ad1 = await as(boss, `update public.feedback set status='In Progress', owner='QA', priority='Critical' where feedback_number='WF-0001' returning date_completed, owner`)
-ok('admin can set status/owner/priority', ad1.r?.rows[0]?.owner === 'QA' && ad1.r.rows[0].date_completed === null, ad1.e)
+const ad1 = await as(boss, `update public.feedback set status='In Progress', owner='${ownName}', priority='Critical' where feedback_number='WF-0001' returning date_completed, owner`)
+ok('admin can set status/owner/priority', ad1.r?.rows[0]?.owner === ownName && ad1.r.rows[0].date_completed === null, ad1.e)
 const ad2 = await as(boss, `update public.feedback set status='Completed', resolution='Fixed' where feedback_number='WF-0001' returning date_completed`)
 ok('Date Completed auto-populated on Completed', !!ad2.r?.rows[0]?.date_completed, ad2.e)
 const dc = ad2.r?.rows[0]?.date_completed
@@ -94,8 +101,10 @@ const del = await as(boss, `delete from public.feedback where feedback_number='W
 ok('admin can delete', (del.r?.rows.length ?? 0) === 1, JSON.stringify(del))
 
 // Config / owners / storage
-const o1 = await as(alice, `select * from public.owners`)
-ok('user cannot read owners list (RLS)', o1.r.rows.length === 0)
+const o1 = await as(alice, `select name, email, active from public.owners`)
+ok('user can read only active admin owners', o1.r.rows.length === 1 && o1.r.rows[0].active === true && o1.r.rows[0].email === 'boss@x.com', JSON.stringify(o1))
+const o2 = await as(alice, `insert into public.owners (email) values ('alice@x.com')`)
+ok('user cannot add owners', !!o2.e, JSON.stringify(o2))
 const c1 = await as(alice, `update public.app_config set value='false'`)
 ok('user cannot change app_config', (c1.r?.affectedRows ?? 0) === 0, JSON.stringify(c1))
 const c2 = await as(alice, `select value from public.app_config where key='screenshot_required'`)

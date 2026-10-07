@@ -101,6 +101,7 @@ export async function createFeedback(
       feedback_type: values.feedback_type,
       changes_required: values.changes_required.trim(),
       priority: values.priority,
+      owner: values.owner || null,
       screenshot_path: screenshotPath,
       reported_by: userId, // must equal auth.uid(); enforced by RLS + trigger
     })
@@ -195,8 +196,9 @@ export async function listOwners(includeInactive = false): Promise<Owner[]> {
   return (data ?? []) as Owner[]
 }
 
-export async function addOwner(name: string): Promise<void> {
-  const { error } = await supabase.from('owners').insert({ name: name.trim(), sort_order: 100 })
+/** Owners must be administrators; the database rejects any email that is not on the admin list. */
+export async function addOwner(email: string): Promise<void> {
+  const { error } = await supabase.from('owners').insert({ email: email.trim().toLowerCase(), sort_order: 100 })
   if (error) throw error
 }
 

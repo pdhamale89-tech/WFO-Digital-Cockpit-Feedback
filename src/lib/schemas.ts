@@ -22,6 +22,7 @@ export function buildFeedbackSchema(screenshotRequired: boolean, options: Dashbo
     card_graph_name: z.string().trim().min(2, 'Enter the component name.').max(200, 'Keep it under 200 characters.'),
     feedback_type: z.enum(FEEDBACK_TYPES, { errorMap: () => ({ message: 'Select a feedback type.' }) }),
     changes_required: z.string().trim().min(10, 'Please describe the issue (at least 10 characters).').max(5000, 'Keep it under 5000 characters.'),
+    owner: z.string().optional(),
     priority: z.enum(PRIORITIES),
     screenshot: z.custom<File | null>().superRefine((file, ctx) => {
       if (!file) {

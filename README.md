@@ -45,6 +45,8 @@ npm run lint && npm test && npm run test:db && npm run build
    - `supabase/migrations/001_schema.sql` – tables, triggers, analytics function
    - `supabase/migrations/002_rls.sql` – privileges + Row Level Security
    - `supabase/migrations/003_storage.sql` – private bucket + Storage RLS
+   - `supabase/migrations/004_dashboard_options.sql` – Business dropdown tree
+   - `supabase/migrations/005_owner_admins.sql` – owners must be admins; Owner dropdown on the form
 3. Authentication → Providers: enable Email. Decide whether to require email confirmation. If you do not want self sign-up, disable "Allow new users to sign up" and create users in the dashboard.
 4. Designate the admin(s): edit and run `supabase/seed/make_admin.sql`.
 5. (Dev/staging only) `supabase/seed/demo_seed.sql` inserts three clearly marked `[DEMO]` rows. **Never run on production.**
@@ -94,7 +96,7 @@ SPA routing on Pages uses the `public/404.html` redirect fallback (assumes a pro
 
 ## Admin configuration
 
-Add admins with `make_admin.sql` or Settings → Administrators. Manage owners and the "screenshot required" toggle in Settings.
+Add admins with `make_admin.sql` or Settings → Administrators. Manage owners and the "screenshot required" toggle in Settings. Owners are picked from the administrator list (the database rejects non-admins) and appear in the Owner dropdown of the feedback form; removing someone's admin access deactivates them as an owner.
 
 ## Workflows
 

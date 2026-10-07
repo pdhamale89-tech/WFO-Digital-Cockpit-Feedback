@@ -44,9 +44,13 @@ function ProfileCard() {
 function OwnersCard() {
   const { toast } = useToast()
   const owners = useAsync(() => listOwners(true), [])
+  const admins = useAsync(listAdminEmails, [])
   const [newName, setNewName] = useState('')
   const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null)
   const [busy, setBusy] = useState(false)
+
+  const taken = new Set((owners.data ?? []).map((o) => (o.email ?? '').toLowerCase()))
+  const availableAdmins = (admins.data ?? []).filter((a) => !taken.has(a.toLowerCase()))
 
   const run = async (fn: () => Promise<void>, ok: string) => {
     setBusy(true)
@@ -58,11 +62,17 @@ function OwnersCard() {
   return (
     <section className="card p-5" aria-labelledby="s-owners">
       <h2 id="s-owners" className="text-sm font-semibold">Owners</h2>
-      <p className="mb-3 text-subtle">People or teams that feedback can be assigned to. Deactivate to hide from new assignments without losing history.</p>
-      <form className="mb-3 flex gap-2 sm:max-w-md" onSubmit={(e) => { e.preventDefault(); if (newName.trim()) void run(async () => { await addOwner(newName); setNewName('') }, 'Owner added') }}>
-        <label htmlFor="o-new" className="sr-only">New owner name</label>
-        <input id="o-new" className="field-input" placeholder="Add owner (e.g. Priya – BI Developer)" value={newName} maxLength={80} onChange={(e) => setNewName(e.target.value)} />
-        <button className="btn-primary" disabled={busy || !newName.trim()}><Plus className="h-4 w-4" /> Add</button>
+      <p className="mb-3 text-subtle">
+        Owners appear in the Owner dropdown on the feedback form. Only people with admin access can be owners; add them under Administrators first.
+        Deactivate to hide from new assignments without losing history.
+      </p>
+      <form className="mb-3 flex gap-2 sm:max-w-md" onSubmit={(e) => { e.preventDefault(); if (newName) void run(async () => { await addOwner(newName); setNewName('') }, 'Owner added') }}>
+        <label htmlFor="o-new" className="sr-only">Admin to add as owner</label>
+        <select id="o-new" className="field-input" onFocus={admins.reload} value={newName} onChange={(e) => setNewName(e.target.value)}>
+          <option value="">Select an admin…</option>
+          {availableAdmins.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <button className="btn-primary" disabled={busy || !newName}><Plus className="h-4 w-4" /> Add</button>
       </form>
       {owners.loading && !owners.data ? <LoadingState variant="table" rows={4} />
         : owners.error ? <ErrorState message={owners.error} onRetry={owners.reload} />
@@ -70,7 +80,7 @@ function OwnersCard() {
           <ul className="divide-y divide-border rounded-lg border border-border">
             {(owners.data ?? []).map((o) => (
               <li key={o.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                <span className={o.active ? '' : 'text-subtle line-through'}>{o.name}</span>
+                <span className={o.active ? '' : 'text-subtle line-through'}>{o.name}{o.email && o.email !== o.name ? <span className="ml-2 text-xs text-subtle">{o.email}</span> : !o.email && <span className="ml-2 text-xs text-subtle">(legacy – not an admin)</span>}</span>
                 <span className="flex items-center gap-1">
                   <button className="btn-secondary btn-sm" disabled={busy} onClick={() => void run(() => setOwnerActive(o.id, !o.active), o.active ? 'Owner deactivated' : 'Owner activated')}>
                     {o.active ? 'Deactivate' : 'Activate'}

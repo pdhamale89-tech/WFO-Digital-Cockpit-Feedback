@@ -17,10 +17,10 @@ import type { DashboardOption } from '@/types'
 
 const DEFAULTS: Partial<FeedbackFormValues> = {
   business: undefined, dashboard_ids: [], component_category: undefined, card_graph_name: '', feedback_type: undefined,
-  changes_required: '', priority: 'Medium', screenshot: null,
+  changes_required: '', owner: '', priority: 'Medium', screenshot: null,
 }
 
-export function FeedbackForm({ screenshotRequired, dashboardOptions }: { screenshotRequired: boolean; dashboardOptions: DashboardOption[] }) {
+export function FeedbackForm({ screenshotRequired, dashboardOptions, owners = [] }: { screenshotRequired: boolean; dashboardOptions: DashboardOption[]; owners?: string[] }) {
   const { profile } = useAuth()
   const { toast } = useToast()
   const schema = useMemo(() => buildFeedbackSchema(screenshotRequired, dashboardOptions), [screenshotRequired, dashboardOptions])
@@ -113,6 +113,12 @@ export function FeedbackForm({ screenshotRequired, dashboardOptions }: { screens
             <select id="feedback_type" className="field-input sm:max-w-xs" defaultValue="" aria-invalid={!!errors.feedback_type} {...register('feedback_type')}>
               <option value="" disabled>Select a type…</option>
               {FEEDBACK_TYPES.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Owner" htmlFor="owner" error={errors.owner?.message} hint="Optional. Only team members with admin access are listed.">
+            <select id="owner" className="field-input sm:max-w-xs" defaultValue="" {...register('owner')}>
+              <option value="">Not sure / unassigned</option>
+              {owners.map((o) => <option key={o}>{o}</option>)}
             </select>
           </FormField>
           <FormField label="Changes required" htmlFor="changes_required" required error={errors.changes_required?.message}>

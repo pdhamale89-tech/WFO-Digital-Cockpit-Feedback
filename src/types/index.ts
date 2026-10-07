@@ -54,6 +54,7 @@ export interface FeedbackHistoryEntry {
 export interface Owner {
   id: string
   name: string
+  email: string | null
   active: boolean
   sort_order: number
 }
