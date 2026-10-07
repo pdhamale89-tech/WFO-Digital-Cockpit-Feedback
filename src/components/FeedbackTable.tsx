@@ -33,9 +33,11 @@ interface Props {
   emptyDescription?: string
 }
 
-const STORAGE_KEY = 'feedback-columns-v1'
-const ADMIN_DEFAULT_HIDDEN: VisibilityState = { feedback_type: false, reported_by_name: false }
-const USER_HIDDEN: VisibilityState = { owner: false, reported_by_name: false, sr: false, feedback_type: false }
+const STORAGE_KEY = 'feedback-columns-v2'
+// Default view: Sr.No, Validated by, Stream, Feature, Page Name, Component type, Owner, Sub Owner, Comments, Status, ETA, Challenges.
+const EXTRA_HIDDEN: VisibilityState = { feedback_number: false, feedback_type: false, screenshot: false, priority: false, date_reported: false, date_completed: false }
+const ADMIN_DEFAULT_HIDDEN: VisibilityState = EXTRA_HIDDEN
+const USER_HIDDEN: VisibilityState = { ...EXTRA_HIDDEN, owner: false, sub_owner: false, challenges: false, reported_by_name: false, sr: false, feedback_number: true, priority: true }
 
 function loadVisibility(variant: TableVariant): VisibilityState {
   if (variant === 'user') return USER_HIDDEN
@@ -47,9 +49,9 @@ function loadVisibility(variant: TableVariant): VisibilityState {
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  sr: 'Sr. No.', feedback_number: 'Feedback ID', business: 'Business', dashboard_path: 'Dashboard', card_graph_name: 'Cards / Graph Name', feedback_type: 'Feedback Type',
-  changes_required: 'Changes Required', screenshot: 'Screenshot', priority: 'Priority', owner: 'Owner', status: 'Status',
-  reported_by_name: 'Reported By', date_reported: 'Date Reported', date_completed: 'Date Completed',
+  sr: 'Sr. No.', feedback_number: 'Feedback ID', business: 'Stream', dashboard_path: 'Feature', card_graph_name: 'Page Name', component_category: 'Component type', feedback_type: 'Feedback Type',
+  changes_required: 'Comments', screenshot: 'Screenshot', priority: 'Priority', owner: 'Owner', sub_owner: 'Sub Owner Name', eta: 'ETA', challenges: 'Challenges if any', status: 'Status',
+  reported_by_name: 'Validated by', date_reported: 'Date Reported', date_completed: 'Date Completed',
 }
 
 export function FeedbackTable(p: Props) {
@@ -63,20 +65,29 @@ export function FeedbackTable(p: Props) {
       { id: 'sr', header: 'Sr. No.', size: 64, minSize: 50, enableSorting: false, cell: (c) => <span className="tabular-nums text-subtle">{offset + c.row.index + 1}</span> },
       { id: 'feedback_number', header: 'Feedback ID', size: 110, ...sortable('feedback_number'), cell: (c) => <span className="font-mono text-xs font-semibold text-brand">{c.row.original.feedback_number}</span> },
       {
-        id: 'card_graph_name', header: 'Cards / Graph Name', size: 190, ...sortable('card_graph_name'),
+        id: 'reported_by_name', header: 'Validated by', size: 160, ...sortable('reported_by_name'),
         cell: (c) => (
-          <div className="min-w-0">
-            <p className="truncate font-medium" title={c.row.original.card_graph_name}>{c.row.original.card_graph_name}</p>
-            <p className="truncate text-xs text-subtle">{c.row.original.component_category}</p>
-          </div>
+          <div className="min-w-0"><p className="truncate">{c.row.original.reported_by_name}</p><p className="truncate text-xs text-subtle">{c.row.original.reported_by_email}</p></div>
         ),
       },
-      { id: 'business', header: 'Business', size: 95, ...sortable('business'), cell: (c) => c.row.original.business ?? '—' },
-      { id: 'dashboard_path', header: 'Dashboard', size: 210, ...sortable('dashboard_path'), cell: (c) => <p className="truncate" title={c.row.original.dashboard_path ?? ''}>{c.row.original.dashboard_path ?? '—'}</p> },
+      { id: 'business', header: 'Stream', size: 95, ...sortable('business'), cell: (c) => c.row.original.business ?? '—' },
+      { id: 'dashboard_path', header: 'Feature', size: 210, ...sortable('dashboard_path'), cell: (c) => <p className="truncate" title={c.row.original.dashboard_path ?? ''}>{c.row.original.dashboard_path ?? '—'}</p> },
+      { id: 'card_graph_name', header: 'Page Name', size: 180, ...sortable('card_graph_name'), cell: (c) => <p className="truncate font-medium" title={c.row.original.card_graph_name}>{c.row.original.card_graph_name}</p> },
+      { id: 'component_category', header: 'Component type', size: 140, ...sortable('component_category'), cell: (c) => c.row.original.component_category },
       { id: 'feedback_type', header: 'Feedback Type', size: 140, ...sortable('feedback_type'), cell: (c) => c.row.original.feedback_type },
+      { id: 'owner', header: 'Owner', size: 130, ...sortable('owner'), cell: (c) => c.row.original.owner ?? <span className="text-subtle">Unassigned</span> },
+      { id: 'sub_owner', header: 'Sub Owner Name', size: 140, ...sortable('sub_owner'), cell: (c) => c.row.original.sub_owner ?? <span className="text-subtle">—</span> },
       {
-        id: 'changes_required', header: 'Changes Required', size: 340, enableSorting: false,
+        id: 'changes_required', header: 'Comments', size: 320, enableSorting: false,
         cell: (c) => <p className="line-clamp-2 whitespace-normal" title={c.row.original.changes_required}>{truncate(c.row.original.changes_required, 220)}</p>,
+      },
+      { id: 'status', header: 'Status', size: 130, ...sortable('status'), cell: (c) => <StatusBadge status={c.row.original.status} /> },
+      { id: 'eta', header: 'ETA', size: 110, ...sortable('eta'), cell: (c) => <span className="tabular-nums">{c.row.original.eta ? formatDate(`${c.row.original.eta}T00:00:00`) : '—'}</span> },
+      {
+        id: 'challenges', header: 'Challenges if any', size: 240, enableSorting: false,
+        cell: (c) => c.row.original.challenges
+          ? <p className="line-clamp-2 whitespace-normal" title={c.row.original.challenges}>{truncate(c.row.original.challenges, 160)}</p>
+          : <span className="text-subtle">—</span>,
       },
       {
         id: 'screenshot', header: 'Screenshot', size: 100, enableSorting: false,
@@ -88,14 +99,6 @@ export function FeedbackTable(p: Props) {
         ) : <span className="text-subtle">None</span>,
       },
       { id: 'priority', header: 'Priority', size: 105, ...sortable('priority'), cell: (c) => <PriorityBadge priority={c.row.original.priority} /> },
-      { id: 'owner', header: 'Owner', size: 130, ...sortable('owner'), cell: (c) => c.row.original.owner ?? <span className="text-subtle">Unassigned</span> },
-      { id: 'status', header: 'Status', size: 130, ...sortable('status'), cell: (c) => <StatusBadge status={c.row.original.status} /> },
-      {
-        id: 'reported_by_name', header: 'Reported By', size: 160, ...sortable('reported_by_name'),
-        cell: (c) => (
-          <div className="min-w-0"><p className="truncate">{c.row.original.reported_by_name}</p><p className="truncate text-xs text-subtle">{c.row.original.reported_by_email}</p></div>
-        ),
-      },
       { id: 'date_reported', header: 'Date Reported', size: 120, ...sortable('date_reported'), cell: (c) => <span className="tabular-nums">{formatDate(c.row.original.date_reported)}</span> },
       {
         id: 'date_completed', header: 'Date Completed', size: 125, ...sortable('date_completed'),

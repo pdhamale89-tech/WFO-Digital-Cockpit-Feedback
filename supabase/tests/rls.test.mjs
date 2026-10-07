@@ -16,7 +16,7 @@ create function storage.foldername(name text) returns text[] language sql as $$ 
 grant usage on schema public, auth, storage to anon, authenticated;
 grant select, insert, delete on storage.objects to authenticated;
 `)
-for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
+for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql', '006_tracking_fields.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
 // default Supabase privileges for public schema
 await db.exec(`grant usage on schema public to anon, authenticated; grant usage on sequence public.feedback_number_seq to authenticated;
 grant all on all tables in schema public to authenticated;`)
@@ -99,6 +99,15 @@ const st2 = await as(boss, `select public.admin_feedback_stats() s`)
 ok('admin stats RPC works', st2.r?.rows[0]?.s?.total === 3, JSON.stringify(st2))
 const del = await as(boss, `delete from public.feedback where feedback_number='WF-0002' returning 1`)
 ok('admin can delete', (del.r?.rows.length ?? 0) === 1, JSON.stringify(del))
+
+const tr1 = await as(alice, `insert into public.feedback (business, component_category, card_graph_name, feedback_type, changes_required, screenshot_path, reported_by, priority, sub_owner, eta, challenges) values ('Remote','KPI Card','x','Data Issue','Count differs', $1, $2, 'High', 'sneaky', '2030-01-01', 'sneaky') returning sub_owner, eta, challenges`, [`${alice}/t.png`, alice])
+ok('user cannot set sub owner / ETA / challenges on submit', tr1.r?.rows[0]?.sub_owner === null && tr1.r.rows[0].eta === null && tr1.r.rows[0].challenges === null, JSON.stringify(tr1))
+const tr2 = await as(alice, `update public.feedback set eta='2030-01-01' where reported_by=$1`, [alice])
+ok('user cannot update ETA', !!tr2.e || (tr2.r?.affectedRows ?? 0) === 0, JSON.stringify(tr2))
+const tr3 = await as(boss, `update public.feedback set sub_owner='Ravi', eta='2026-12-01', challenges='Data lag' where feedback_number='WF-0001' returning eta`)
+ok('admin can set sub owner / ETA / challenges', tr3.r?.rows.length === 1, tr3.e)
+const trh = (await db.query(`select field_changed from public.feedback_history where field_changed in ('eta','sub_owner','challenges')`)).rows
+ok('audit records the tracking fields', trh.length === 3, JSON.stringify(trh))
 
 // Config / owners / storage
 const o1 = await as(alice, `select name, email, active from public.owners`)

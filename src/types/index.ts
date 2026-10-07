@@ -30,6 +30,9 @@ export interface Feedback {
   reported_by_email: string
   priority: Priority
   owner: string | null
+  sub_owner: string | null
+  eta: string | null
+  challenges: string | null
   status: Status
   date_reported: string
   date_completed: string | null
@@ -78,6 +81,7 @@ export interface FeedbackStats {
 
 export type SortField =
   | 'feedback_number' | 'business' | 'dashboard_path' | 'card_graph_name' | 'feedback_type' | 'priority' | 'owner'
+  | 'component_category' | 'sub_owner' | 'eta'
   | 'status' | 'reported_by_name' | 'date_reported' | 'date_completed'
 
 export interface FeedbackFilters {

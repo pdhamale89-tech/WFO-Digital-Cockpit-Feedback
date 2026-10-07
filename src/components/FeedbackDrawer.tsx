@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { CheckCheck, Loader2, Pencil, Save, Trash2, X } from 'lucide-react'
 import { FEEDBACK_TYPES, PRIORITIES, STATUSES, STATUS_TRANSITIONS } from '@/lib/constants'
 import { toUserMessage } from '@/lib/errors'
-import { formatDateTime } from '@/lib/utils'
+import { formatDate, formatDateTime } from '@/lib/utils'
 import { useAsync } from '@/hooks/useAsync'
 import { useToast } from '@/hooks/useToast'
 import {
@@ -49,7 +49,7 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
   const detail = useAsync(() => getFeedback(id), [id])
   const history = useAsync(() => (mode === 'admin' ? getHistory(id) : Promise.resolve([])), [id, mode])
   const [fb, setFb] = useState<Feedback | null>(null)
-  const [draft, setDraft] = useState({ status: 'New' as Status, owner: '', priority: 'Medium' as Priority, admin_comments: '', resolution: '' })
+  const [draft, setDraft] = useState({ status: 'New' as Status, owner: '', sub_owner: '', eta: '', challenges: '', priority: 'Medium' as Priority, admin_comments: '', resolution: '' })
   const [edit, setEdit] = useState(false)
   const [editFields, setEditFields] = useState({ card_graph_name: '', feedback_type: 'Other' as FeedbackType, changes_required: '' })
   const [userComment, setUserComment] = useState('')
@@ -59,7 +59,7 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
 
   const hydrate = (f: Feedback) => {
     setFb(f)
-    setDraft({ status: f.status, owner: f.owner ?? '', priority: f.priority, admin_comments: f.admin_comments ?? '', resolution: f.resolution ?? '' })
+    setDraft({ status: f.status, owner: f.owner ?? '', sub_owner: f.sub_owner ?? '', eta: f.eta ?? '', challenges: f.challenges ?? '', priority: f.priority, admin_comments: f.admin_comments ?? '', resolution: f.resolution ?? '' })
     setEditFields({ card_graph_name: f.card_graph_name, feedback_type: f.feedback_type, changes_required: f.changes_required })
     setUserComment(f.user_comments ?? '')
   }
@@ -95,6 +95,9 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
     if (draft.status !== fb.status) patch.status = draft.status
     if ((draft.owner || null) !== fb.owner) patch.owner = draft.owner || null
     if (draft.priority !== fb.priority) patch.priority = draft.priority
+    if ((draft.sub_owner.trim() || null) !== (fb.sub_owner || null)) patch.sub_owner = draft.sub_owner.trim() || null
+    if ((draft.eta || null) !== (fb.eta || null)) patch.eta = draft.eta || null
+    if ((draft.challenges.trim() || null) !== (fb.challenges || null)) patch.challenges = draft.challenges.trim() || null
     if ((draft.admin_comments || null) !== (fb.admin_comments || null)) patch.admin_comments = draft.admin_comments.trim() || null
     if ((draft.resolution || null) !== (fb.resolution || null)) patch.resolution = draft.resolution.trim() || null
     if (edit) {
@@ -135,6 +138,7 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
 
   const dirty = fb && (
     draft.status !== fb.status || (draft.owner || null) !== fb.owner || draft.priority !== fb.priority ||
+    (draft.sub_owner.trim() || null) !== (fb.sub_owner || null) || (draft.eta || null) !== (fb.eta || null) || (draft.challenges.trim() || null) !== (fb.challenges || null) ||
     (draft.admin_comments || null) !== (fb.admin_comments || null) || (draft.resolution || null) !== (fb.resolution || null) ||
     (edit && (editFields.card_graph_name.trim() !== fb.card_graph_name || editFields.feedback_type !== fb.feedback_type || editFields.changes_required.trim() !== fb.changes_required))
   )
@@ -199,6 +203,7 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
             <dl className="grid grid-cols-2 gap-4 border-y border-border py-4">
               <Row label="Reported by">{fb.reported_by_name}<br /><span className="text-xs text-subtle">{fb.reported_by_email}</span></Row>
               <Row label="Owner">{fb.owner ?? <span className="text-subtle">Unassigned</span>}</Row>
+              <Row label="ETA">{fb.eta ? formatDate(`${fb.eta}T00:00:00`) : '—'}</Row>
               <Row label="Date reported">{formatDateTime(fb.date_reported)}</Row>
               <Row label="Date completed">{fb.status === 'Completed' ? formatDateTime(fb.date_completed) : '—'}</Row>
             </dl>
@@ -224,6 +229,17 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
                     </select>
                   </FormField>
                 </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="Sub owner name" htmlFor="a-subowner">
+                    <input id="a-subowner" className="field-input" maxLength={120} value={draft.sub_owner} onChange={(e) => setDraft({ ...draft, sub_owner: e.target.value })} />
+                  </FormField>
+                  <FormField label="ETA" htmlFor="a-eta">
+                    <input id="a-eta" type="date" className="field-input" value={draft.eta} onChange={(e) => setDraft({ ...draft, eta: e.target.value })} />
+                  </FormField>
+                </div>
+                <FormField label="Challenges if any" htmlFor="a-challenges">
+                  <textarea id="a-challenges" rows={2} className="field-input" maxLength={5000} value={draft.challenges} onChange={(e) => setDraft({ ...draft, challenges: e.target.value })} />
+                </FormField>
                 <FormField label="Admin comments" htmlFor="a-comments" hint="Visible to the reporter on their feedback.">
                   <textarea id="a-comments" rows={3} className="field-input" value={draft.admin_comments} onChange={(e) => setDraft({ ...draft, admin_comments: e.target.value })} maxLength={5000} />
                 </FormField>

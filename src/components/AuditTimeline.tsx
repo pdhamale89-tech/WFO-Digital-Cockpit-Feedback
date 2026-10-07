@@ -4,7 +4,7 @@ import type { FeedbackHistoryEntry } from '@/types'
 import { EmptyState } from './States'
 
 const FIELD_LABEL: Record<string, string> = {
-  status: 'Status', owner: 'Owner', priority: 'Priority', resolution: 'Resolution', admin_comments: 'Admin comments',
+  status: 'Status', owner: 'Owner', sub_owner: 'Sub owner', eta: 'ETA', challenges: 'Challenges', priority: 'Priority', resolution: 'Resolution', admin_comments: 'Admin comments',
   card_graph_name: 'Component name', feedback_type: 'Feedback type', changes_required: 'Changes required', user_comments: 'User comment',
 }
 

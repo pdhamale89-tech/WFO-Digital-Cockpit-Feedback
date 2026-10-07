@@ -8,7 +8,7 @@ import { removeScreenshot, uploadScreenshot } from './storageService'
 
 const SORTABLE: readonly SortField[] = [
   'feedback_number', 'business', 'dashboard_path', 'card_graph_name', 'feedback_type', 'priority', 'owner',
-  'status', 'reported_by_name', 'date_reported', 'date_completed',
+  'component_category', 'sub_owner', 'eta', 'status', 'reported_by_name', 'date_reported', 'date_completed',
 ]
 
 /** Strip characters that have meaning inside a PostgREST or()/ilike filter. */
@@ -39,7 +39,7 @@ function applyFilters<T>(builder: T, q: Omit<FeedbackQuery, 'page' | 'pageSize' 
   if (s) {
     const p = `%${s}%`
     b = b.or(
-      ['feedback_number', 'card_graph_name', 'changes_required', 'owner', 'reported_by_name', 'reported_by_email']
+      ['feedback_number', 'card_graph_name', 'changes_required', 'owner', 'sub_owner', 'reported_by_name', 'reported_by_email']
         .map((c) => `${c}.ilike.${p}`).join(','),
     )
   }
@@ -118,6 +118,9 @@ export async function createFeedback(
 export interface AdminUpdate {
   status?: Status
   owner?: string | null
+  sub_owner?: string | null
+  eta?: string | null
+  challenges?: string | null
   priority?: Priority
   resolution?: string | null
   admin_comments?: string | null

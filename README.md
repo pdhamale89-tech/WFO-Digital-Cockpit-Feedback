@@ -21,6 +21,7 @@ Feedback data never goes to GitHub. GitHub holds code, SQL migrations, docs and 
 ## Features
 
 - **Users**: submit feedback (component type + name, feedback type, description, priority, screenshot with drag-drop / paste / preview / progress), see only their own feedback and status, add a follow-up comment.
+- **Admin table columns** (default): Sr.No, Validated by, Stream (Business), Feature (Sub business > Dashboard path), Page Name, Component type, Owner, Sub Owner Name, Comments, Status, ETA, Challenges if any. Other columns (Feedback ID, Priority, Screenshot, dates) are available from the Columns menu.
 - **Admins**: KPI cards, server-side search/sort/filter/pagination, column show/hide + resize, CSV/Excel export, screenshot lightbox (zoom, fit, download), right-side detail drawer (status, owner, priority, comments, resolution, edit, delete), audit timeline, analytics (6 charts), settings (owners, screenshot-required toggle, admin emails).
 - Feedback IDs (`WF-0001`…), reporter identity and dates are assigned **by the database**.
 - Mobile: the table becomes cards. Light/dark mode. Keyboard + screen-reader friendly.
@@ -47,6 +48,7 @@ npm run lint && npm test && npm run test:db && npm run build
    - `supabase/migrations/003_storage.sql` – private bucket + Storage RLS
    - `supabase/migrations/004_dashboard_options.sql` – Business dropdown tree
    - `supabase/migrations/005_owner_admins.sql` – owners must be admins; Owner dropdown on the form
+   - `supabase/migrations/006_tracking_fields.sql` – Sub owner, ETA, Challenges columns (admin-edited)
 3. Authentication → Providers: enable Email. Decide whether to require email confirmation. If you do not want self sign-up, disable "Allow new users to sign up" and create users in the dashboard.
 4. Designate the admin(s): edit and run `supabase/seed/make_admin.sql`.
 5. (Dev/staging only) `supabase/seed/demo_seed.sql` inserts three clearly marked `[DEMO]` rows. **Never run on production.**
