@@ -1,12 +1,14 @@
-import { Suspense, lazy } from 'react'
+import { Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ToastProvider } from '@/hooks/useToast'
 import { AppLayout } from '@/layouts/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { EmptyState, LoadingState } from '@/components/States'
+import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { AdminFeedbackPage } from '@/pages/AdminFeedbackPage'
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })))
+const AnalyticsPage = lazyWithRetry(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })))
 import { FeedbackPage } from '@/pages/FeedbackPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { MyFeedbackPage } from '@/pages/MyFeedbackPage'
@@ -26,6 +28,7 @@ function NotFound() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <ToastProvider>
         <AuthProvider>
@@ -50,5 +53,6 @@ export default function App() {
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

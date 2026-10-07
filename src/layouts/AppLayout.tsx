@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 
@@ -106,7 +107,9 @@ export function AppLayout() {
           </div>
         </header>
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1800px] flex-1 p-4 sm:p-6">
-          <Outlet />
+          <ErrorBoundary key={loc.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
