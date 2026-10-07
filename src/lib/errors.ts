@@ -26,6 +26,11 @@ export function toUserMessage(err: unknown, fallback = 'Something went wrong. Pl
   if (e.code === '42501' || e.status === 403 || msg.includes('row-level security') || msg.includes('not allowed') || msg.includes('forbidden')) {
     return 'You do not have permission to perform this action.'
   }
+  if (e.code === '23505' || msg.includes('duplicate key')) return 'That name already exists.'
+  if (msg.includes('admin access can be owners')) return 'This database still has the old admin-only owner rule. Run the latest supabase/setup_all.sql in the Supabase SQL Editor.'
+  if (e.code === '42P01' || e.code === '42703' || e.code === 'PGRST205' || e.code === 'PGRST204') {
+    return 'The database is missing the latest update. Run supabase/setup_all.sql in the Supabase SQL Editor.'
+  }
   if (msg.includes('screenshot is required')) return 'A screenshot is required.'
   if (msg.includes('exceeded the maximum allowed size') || e.status === 413) return 'The file is too large (maximum 10 MB).'
   if (msg.includes('mime type') || msg.includes('invalid_mime_type')) return 'Unsupported file type. Use PNG, JPG, JPEG or WEBP.'
