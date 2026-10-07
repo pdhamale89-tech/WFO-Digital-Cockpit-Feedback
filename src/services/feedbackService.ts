@@ -7,7 +7,7 @@ import type { FeedbackFormValues } from '@/lib/schemas'
 import { removeScreenshot, uploadScreenshot } from './storageService'
 
 const SORTABLE: readonly SortField[] = [
-  'feedback_number', 'card_graph_name', 'feedback_type', 'priority', 'owner',
+  'feedback_number', 'business', 'card_graph_name', 'feedback_type', 'priority', 'owner',
   'status', 'reported_by_name', 'date_reported', 'date_completed',
 ]
 
@@ -30,6 +30,7 @@ function applyFilters<T>(builder: T, q: Omit<FeedbackQuery, 'page' | 'pageSize' 
   if (q.status) b = b.eq('status', q.status)
   if (q.priority) b = b.eq('priority', q.priority)
   if (q.type) b = b.eq('feedback_type', q.type)
+  if (q.business) b = b.eq('business', q.business)
   if (q.owner === '__unassigned__') b = b.is('owner', null)
   else if (q.owner) b = b.eq('owner', q.owner)
   if (q.dateFrom) b = b.gte('date_reported', dayStartIso(q.dateFrom))
@@ -92,6 +93,7 @@ export async function createFeedback(
   const { data, error } = await supabase
     .from('feedback')
     .insert({
+      business: values.business,
       component_category: values.component_category,
       card_graph_name: values.card_graph_name.trim(),
       feedback_type: values.feedback_type,

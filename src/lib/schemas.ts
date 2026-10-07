@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import {
-  ACCEPTED_IMAGE_TYPES, COMPONENT_CATEGORIES, FEEDBACK_TYPES, MAX_SCREENSHOT_BYTES, PRIORITIES,
+  ACCEPTED_IMAGE_TYPES, BUSINESSES, COMPONENT_CATEGORIES, FEEDBACK_TYPES, MAX_SCREENSHOT_BYTES, PRIORITIES,
 } from './constants'
 
 export function validateScreenshot(file: File): string | null {
@@ -14,6 +14,7 @@ export function validateScreenshot(file: File): string | null {
 
 export function buildFeedbackSchema(screenshotRequired: boolean) {
   return z.object({
+    business: z.enum(BUSINESSES, { errorMap: () => ({ message: 'Select a business.' }) }),
     component_category: z.enum(COMPONENT_CATEGORIES, { errorMap: () => ({ message: 'Select a component type.' }) }),
     card_graph_name: z.string().trim().min(2, 'Enter the component name.').max(200, 'Keep it under 200 characters.'),
     feedback_type: z.enum(FEEDBACK_TYPES, { errorMap: () => ({ message: 'Select a feedback type.' }) }),

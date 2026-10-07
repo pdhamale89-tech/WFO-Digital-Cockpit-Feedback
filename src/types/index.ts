@@ -1,6 +1,7 @@
-import type { COMPONENT_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, STATUSES } from '@/lib/constants'
+import type { BUSINESSES, COMPONENT_CATEGORIES, FEEDBACK_TYPES, PRIORITIES, STATUSES } from '@/lib/constants'
 
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number]
+export type Business = (typeof BUSINESSES)[number]
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number]
 export type Priority = (typeof PRIORITIES)[number]
 export type Status = (typeof STATUSES)[number]
@@ -17,6 +18,7 @@ export interface Profile {
 export interface Feedback {
   id: string
   feedback_number: string
+  business: Business | null
   component_category: ComponentCategory
   card_graph_name: string
   feedback_type: FeedbackType
@@ -73,7 +75,7 @@ export interface FeedbackStats {
 }
 
 export type SortField =
-  | 'feedback_number' | 'card_graph_name' | 'feedback_type' | 'priority' | 'owner'
+  | 'feedback_number' | 'business' | 'card_graph_name' | 'feedback_type' | 'priority' | 'owner'
   | 'status' | 'reported_by_name' | 'date_reported' | 'date_completed'
 
 export interface FeedbackFilters {
@@ -82,6 +84,7 @@ export interface FeedbackFilters {
   priority: string
   owner: string
   type: string
+  business: string
   dateFrom: string
   dateTo: string
 }
@@ -97,5 +100,5 @@ export interface FeedbackQuery extends FeedbackFilters {
 }
 
 export const EMPTY_FILTERS: FeedbackFilters = {
-  search: '', status: '', priority: '', owner: '', type: '', dateFrom: '', dateTo: '',
+  search: '', status: '', priority: '', owner: '', type: '', business: '', dateFrom: '', dateTo: '',
 }

@@ -2,6 +2,8 @@ export const COMPONENT_CATEGORIES = [
   'KPI Card', 'Chart', 'Graph', 'Table', 'Filter', 'Slicer', 'Dashboard Header', 'Navigation', 'Tooltip', 'Other',
 ] as const
 
+export const BUSINESSES = ['Remote', 'Field', 'Care', 'BPA'] as const
+
 export const FEEDBACK_TYPES = [
   'Data Issue', 'Calculation Issue', 'UI Issue', 'Layout Issue', 'Label Issue',
   'Filter Issue', 'Performance Issue', 'Functional Issue', 'Enhancement', 'Other',

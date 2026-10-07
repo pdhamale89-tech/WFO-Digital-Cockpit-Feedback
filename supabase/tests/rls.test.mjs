@@ -36,8 +36,8 @@ const boss = await mk('boss@x.com'), alice = await mk('alice@x.com'), bob = awai
 const roles = (await db.query(`select email, role from public.profiles order by email`)).rows
 ok('admin email gets admin role, others user', roles.find(r => r.email === 'boss@x.com').role === 'admin' && roles.filter(r => r.role === 'user').length === 2, JSON.stringify(roles))
 
-const ins = (uid, extra = {}) => as(uid, `insert into public.feedback (component_category, card_graph_name, feedback_type, changes_required, screenshot_path, reported_by, status, owner, priority)
-  values ('KPI Card','Contact Volume','Data Issue','Count differs', $1, $2, $3, $4, 'High') returning feedback_number, status, owner, reported_by_email`,
+const ins = (uid, extra = {}) => as(uid, `insert into public.feedback (business, component_category, card_graph_name, feedback_type, changes_required, screenshot_path, reported_by, status, owner, priority)
+  values ('Remote','KPI Card','Contact Volume','Data Issue','Count differs', $1, $2, $3, $4, 'High') returning feedback_number, status, owner, reported_by_email`,
   [extra.path ?? `${uid}/a.png`, extra.by ?? uid, extra.status ?? 'Completed', extra.owner ?? 'Hacker'])
 const a1 = await ins(alice)
 ok('user can insert own feedback; triggers force status=New, owner=null, email from profile', a1.r?.rows[0]?.status === 'New' && a1.r.rows[0].owner === null && a1.r.rows[0].reported_by_email === 'alice@x.com', a1.e)
@@ -46,7 +46,7 @@ const imp = await ins(alice, { by: bob })
 ok('user cannot impersonate another reporter (forced to own id, no error leak)', imp.r?.rows[0]?.reported_by_email === 'alice@x.com' || !!imp.e, JSON.stringify(imp))
 const bad = await ins(alice, { path: `${bob}/x.png` })
 ok("user cannot reference another user's screenshot path", !!bad.e, JSON.stringify(bad.r?.rows))
-const nos = await as(alice, `insert into public.feedback (component_category, card_graph_name, feedback_type, changes_required) values ('Other','x','Other','y')`)
+const nos = await as(alice, `insert into public.feedback (business, component_category, card_graph_name, feedback_type, changes_required) values ('Care','Other','x','Other','y')`)
 ok('screenshot required by default', /screenshot/i.test(nos.e ?? ''), nos.e)
 await ins(bob)
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { RotateCcw, Search, X } from 'lucide-react'
-import { FEEDBACK_TYPES, PRIORITIES, STATUSES } from '@/lib/constants'
+import { BUSINESSES, FEEDBACK_TYPES, PRIORITIES, STATUSES } from '@/lib/constants'
 import { useDebounce } from '@/hooks/useDebounce'
 import { EMPTY_FILTERS, type FeedbackFilters } from '@/types'
 
@@ -40,6 +40,7 @@ export function FilterBar({ filters, onChange, owners = [], showOwner = true }: 
           </button>
         )}
       </div>
+      <Select label="Business" value={filters.business} onChange={(v) => onChange({ business: v })} options={BUSINESSES} />
       <Select label="Status" value={filters.status} onChange={(v) => onChange({ status: v })} options={STATUSES} />
       <Select label="Priority" value={filters.priority} onChange={(v) => onChange({ priority: v })} options={PRIORITIES} />
       {showOwner && (

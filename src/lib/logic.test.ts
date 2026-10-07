@@ -21,7 +21,7 @@ describe('validateScreenshot', () => {
 
 describe('feedback schema', () => {
   const valid = {
-    component_category: 'KPI Card', card_graph_name: 'Contact Volume Trend', feedback_type: 'Data Issue',
+    business: 'Remote', component_category: 'KPI Card', card_graph_name: 'Contact Volume Trend', feedback_type: 'Data Issue',
     changes_required: 'Contact count differs from source', priority: 'Medium', screenshot: file('image/png', 5),
   }
   it('requires a screenshot when configured', () => {

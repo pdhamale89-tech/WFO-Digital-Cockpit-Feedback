@@ -132,6 +132,10 @@ create table if not exists public.feedback (
   updated_at         timestamptz not null default now()
 );
 
+alter table public.feedback add column if not exists business text
+  check (business in ('Remote','Field','Care','BPA'));
+
+create index if not exists feedback_business_idx on public.feedback (business);
 create index if not exists feedback_reported_by_idx  on public.feedback (reported_by, date_reported desc);
 create index if not exists feedback_status_idx       on public.feedback (status);
 create index if not exists feedback_priority_idx     on public.feedback (priority);
@@ -178,6 +182,10 @@ begin
   new.date_reported     := now();
   new.created_at        := now();
   new.updated_at        := now();
+
+  if new.business is null then
+    raise exception 'Business is required.' using errcode = '23514';
+  end if;
 
   select coalesce((value)::boolean, true) into shot_required from public.app_config where key = 'screenshot_required';
   if coalesce(shot_required, true) and new.screenshot_path is null then

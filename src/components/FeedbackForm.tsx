@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2, Send } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { COMPONENT_CATEGORIES, FEEDBACK_TYPES, PRIORITIES } from '@/lib/constants'
+import { BUSINESSES, COMPONENT_CATEGORIES, FEEDBACK_TYPES, PRIORITIES } from '@/lib/constants'
 import { buildFeedbackSchema, type FeedbackFormValues } from '@/lib/schemas'
 import { toUserMessage } from '@/lib/errors'
 import { createFeedback } from '@/services/feedbackService'
@@ -13,7 +13,7 @@ import { FormField, FormSection } from './FormField'
 import { ScreenshotUploader } from './ScreenshotUploader'
 
 const DEFAULTS: Partial<FeedbackFormValues> = {
-  component_category: undefined, card_graph_name: '', feedback_type: undefined,
+  business: undefined, component_category: undefined, card_graph_name: '', feedback_type: undefined,
   changes_required: '', priority: 'Medium', screenshot: null,
 }
 
@@ -65,6 +65,14 @@ export function FeedbackForm({ screenshotRequired }: { screenshotRequired: boole
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-4" aria-label="Report feedback">
       <FormSection step={1} title="Component">
+        <div className="mb-4">
+          <FormField label="Business" htmlFor="business" required error={errors.business?.message}>
+            <select id="business" className="field-input sm:max-w-xs" defaultValue="" aria-invalid={!!errors.business} {...register('business')}>
+              <option value="" disabled>Select a business…</option>
+              {BUSINESSES.map((b) => <option key={b}>{b}</option>)}
+            </select>
+          </FormField>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Component type" htmlFor="component_category" required error={errors.component_category?.message}>
             <select id="component_category" className="field-input" defaultValue="" aria-invalid={!!errors.component_category}

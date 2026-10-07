@@ -2,13 +2,13 @@ import type { Feedback } from '@/types'
 import { formatDateTime } from '@/lib/utils'
 
 const HEADERS = [
-  'Feedback ID', 'Component Type', 'Cards / Graph Name', 'Feedback Type', 'Changes Required', 'Priority',
+  'Feedback ID', 'Business', 'Component Type', 'Cards / Graph Name', 'Feedback Type', 'Changes Required', 'Priority',
   'Owner', 'Status', 'Reported By', 'Reporter Email', 'Date Reported', 'Date Completed', 'Resolution', 'Admin Comments',
 ]
 
 function rowValues(f: Feedback): string[] {
   return [
-    f.feedback_number, f.component_category, f.card_graph_name, f.feedback_type, f.changes_required, f.priority,
+    f.feedback_number, f.business ?? '', f.component_category, f.card_graph_name, f.feedback_type, f.changes_required, f.priority,
     f.owner ?? '', f.status, f.reported_by_name, f.reported_by_email, formatDateTime(f.date_reported),
     f.status === 'Completed' ? formatDateTime(f.date_completed) : '', f.resolution ?? '', f.admin_comments ?? '',
   ]
