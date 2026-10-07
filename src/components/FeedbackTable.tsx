@@ -33,9 +33,9 @@ interface Props {
   emptyDescription?: string
 }
 
-const STORAGE_KEY = 'feedback-columns-v2'
-// Default view: Sr.No, Validated by, Stream, Feature, Page Name, Component type, Owner, Sub Owner, Comments, Status, ETA, Challenges.
-const EXTRA_HIDDEN: VisibilityState = { feedback_number: false, feedback_type: false, screenshot: false, priority: false, date_reported: false, date_completed: false }
+const STORAGE_KEY = 'feedback-columns-v3'
+// Default view: Sr.No, Validated by, Stream, Feature, Page Name, Component type, Owner, Sub Owner, Comments, Status, ETA, Challenges, Attachment.
+const EXTRA_HIDDEN: VisibilityState = { feedback_number: false, feedback_type: false, priority: false, date_reported: false, date_completed: false }
 const ADMIN_DEFAULT_HIDDEN: VisibilityState = EXTRA_HIDDEN
 const USER_HIDDEN: VisibilityState = { ...EXTRA_HIDDEN, owner: false, sub_owner: false, challenges: false, reported_by_name: false, sr: false, feedback_number: true, priority: true }
 
@@ -50,7 +50,7 @@ function loadVisibility(variant: TableVariant): VisibilityState {
 
 const COLUMN_LABELS: Record<string, string> = {
   sr: 'Sr. No.', feedback_number: 'Feedback ID', business: 'Stream', dashboard_path: 'Feature', card_graph_name: 'Page Name', component_category: 'Component type', feedback_type: 'Feedback Type',
-  changes_required: 'Comments', screenshot: 'Screenshot', priority: 'Priority', owner: 'Owner', sub_owner: 'Sub Owner Name', eta: 'ETA', challenges: 'Challenges if any', status: 'Status',
+  changes_required: 'Comments', screenshot: 'Attachment', priority: 'Priority', owner: 'Owner', sub_owner: 'Sub Owner Name', eta: 'ETA', challenges: 'Challenges if any', status: 'Status',
   reported_by_name: 'Validated by', date_reported: 'Date Reported', date_completed: 'Date Completed',
 }
 
@@ -90,13 +90,13 @@ export function FeedbackTable(p: Props) {
           : <span className="text-subtle">—</span>,
       },
       {
-        id: 'screenshot', header: 'Screenshot', size: 100, enableSorting: false,
+        id: 'screenshot', header: 'Attachment', size: 120, enableSorting: false,
         cell: (c) => c.row.original.screenshot_path ? (
           <button className="btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); p.onViewScreenshot(c.row.original) }}
             aria-label={`View screenshot for ${c.row.original.feedback_number}`}>
-            <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> View
+            <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> View image
           </button>
-        ) : <span className="text-subtle">None</span>,
+        ) : <span className="text-subtle">No attachment</span>,
       },
       { id: 'priority', header: 'Priority', size: 105, ...sortable('priority'), cell: (c) => <PriorityBadge priority={c.row.original.priority} /> },
       { id: 'date_reported', header: 'Date Reported', size: 120, ...sortable('date_reported'), cell: (c) => <span className="tabular-nums">{formatDate(c.row.original.date_reported)}</span> },

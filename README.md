@@ -21,7 +21,7 @@ Feedback data never goes to GitHub. GitHub holds code, SQL migrations, docs and 
 ## Features
 
 - **Users**: submit feedback (component type + name, feedback type, description, priority, screenshot with drag-drop / paste / preview / progress), see only their own feedback and status, add a follow-up comment.
-- **Admin table columns** (default): Sr.No, Validated by, Stream (Business), Feature (Sub business > Dashboard path), Page Name, Component type, Owner, Sub Owner Name, Comments, Status, ETA, Challenges if any. Other columns (Feedback ID, Priority, Screenshot, dates) are available from the Columns menu.
+- **Admin table columns** (default): Sr.No, Validated by, Stream (Business), Feature (Sub business > Dashboard path), Page Name, Component type, Owner, Sub Owner Name, Comments, Status, ETA, Challenges if any, Attachment (opens the screenshot). Other columns (Feedback ID, Priority, Screenshot, dates) are available from the Columns menu.
 - **Admins**: KPI cards, server-side search/sort/filter/pagination, column show/hide + resize, CSV/Excel export, screenshot lightbox (zoom, fit, download), right-side detail drawer (status, owner, priority, comments, resolution, edit, delete), audit timeline, analytics (6 charts), settings (owners, screenshot-required toggle, admin emails).
 - Feedback IDs (`WF-0001`…), reporter identity and dates are assigned **by the database**.
 - Mobile: the table becomes cards. Light/dark mode. Keyboard + screen-reader friendly.
