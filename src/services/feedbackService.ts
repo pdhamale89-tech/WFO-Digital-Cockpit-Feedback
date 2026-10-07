@@ -200,9 +200,8 @@ export async function listOwners(includeInactive = false): Promise<Owner[]> {
   return (data ?? []) as Owner[]
 }
 
-/** Owners must be administrators; the database rejects any email that is not on the admin list. */
-export async function addOwner(email: string): Promise<void> {
-  const { error } = await supabase.from('owners').insert({ email: email.trim().toLowerCase(), sort_order: 100 })
+export async function addOwner(name: string): Promise<void> {
+  const { error } = await supabase.from('owners').insert({ name: name.trim(), sort_order: 100 })
   if (error) throw error
 }
 

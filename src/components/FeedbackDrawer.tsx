@@ -220,10 +220,8 @@ function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: s
                     </select>
                   </FormField>
                   <FormField label="Owner" htmlFor="a-owner">
-                    <select id="a-owner" className="field-input" value={draft.owner} onChange={(e) => setDraft({ ...draft, owner: e.target.value })}>
-                      <option value="">Unassigned</option>
-                      {[...new Set([...(fb.owner ? [fb.owner] : []), ...owners])].map((o) => <option key={o}>{o}</option>)}
-                    </select>
+                    <SearchableSelect id="a-owner" value={draft.owner} onChange={(v) => setDraft({ ...draft, owner: v })}
+                      options={[...new Set([...(fb.owner ? [fb.owner] : []), ...owners])]} placeholder="Search owner…" emptyLabel="No owners found" />
                   </FormField>
                   <FormField label="Priority" htmlFor="a-priority">
                     <select id="a-priority" className="field-input" value={draft.priority} onChange={(e) => setDraft({ ...draft, priority: e.target.value as Priority })}>

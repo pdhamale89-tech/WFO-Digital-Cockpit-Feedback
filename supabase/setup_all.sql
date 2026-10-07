@@ -457,9 +457,6 @@ end $$;
 alter table public.owners add column if not exists email text;
 create unique index if not exists owners_email_uidx on public.owners (lower(email)) where email is not null;
 
--- Legacy owners (free-text names, not linked to an admin) are hidden from the dropdowns.
-update public.owners set active = false where email is null;
-
 create or replace function public.is_valid_owner(owner_name text)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
@@ -680,6 +677,22 @@ $$;
 drop trigger if exists feedback_bu_assignee on public.feedback;
 create trigger feedback_bu_assignee before update on public.feedback
   for each row execute function public.feedback_check_assignee();
+-- 008: Owners work like Assignees: names managed by admins in Settings, no admin-email requirement.
+-- (Supersedes the admin-only restriction from 005.)
+drop trigger if exists owners_guard_t on public.owners;
+drop trigger if exists admin_emails_ad on public.admin_emails;
+
+create unique index if not exists owners_name_lower_uidx on public.owners (lower(name));
+
+create or replace function public.is_valid_owner(owner_name text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.owners where name = owner_name and active);
+$$;
+
+-- Signed-in users read the active list (feedback form dropdown); admins read everything.
+drop policy if exists owners_read_active on public.owners;
+create policy owners_read_active on public.owners for select to authenticated
+  using (active);
 -- Designate administrators (database-controlled; never in frontend code).
 -- Replace the email, then run once in the Supabase SQL editor.
 -- Existing accounts are promoted immediately; future sign-ups with this email become admin automatically.

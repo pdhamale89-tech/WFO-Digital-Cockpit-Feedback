@@ -16,7 +16,7 @@ create function storage.foldername(name text) returns text[] language sql as $$ 
 grant usage on schema public, auth, storage to anon, authenticated;
 grant select, insert, delete on storage.objects to authenticated;
 `)
-for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql', '006_tracking_fields.sql', '007_assignees.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
+for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql', '006_tracking_fields.sql', '007_assignees.sql', '008_owners_freeform.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
 // default Supabase privileges for public schema
 await db.exec(`grant usage on schema public to anon, authenticated; grant usage on sequence public.feedback_number_seq to authenticated;
 grant all on all tables in schema public to authenticated;`)
@@ -33,12 +33,12 @@ const as = async (uid, sql, params) => {
 await db.exec(`insert into public.admin_emails values ('boss@x.com')`)
 const mk = async (email) => (await db.query(`insert into auth.users (email) values ($1) returning id`, [email])).rows[0].id
 const boss = await mk('boss@x.com'), alice = await mk('alice@x.com'), bob = await mk('bob@x.com')
-const own1 = await as(boss, `insert into public.owners (email) values ('Boss@X.com') returning name, email`)
-ok('admin can add an admin as owner (email lower-cased, name from profile)', own1.r?.rows[0]?.email === 'boss@x.com', JSON.stringify(own1))
-const own2 = await as(boss, `insert into public.owners (email) values ('alice@x.com')`)
-ok('non-admin cannot be added as owner', !!own2.e, JSON.stringify(own2))
-const own3 = await as(boss, `insert into public.owners (name) values ('Free Text')`)
-ok('owner without admin email rejected', !!own3.e, JSON.stringify(own3))
+const own1 = await as(boss, `insert into public.owners (name) values ('Priya') returning name`)
+ok('admin can add an owner by name', own1.r?.rows[0]?.name === 'Priya', JSON.stringify(own1))
+const own2 = await as(boss, `insert into public.owners (name) values ('PRIYA')`)
+ok('duplicate owner name (any case) rejected', !!own2.e, JSON.stringify(own2))
+const own3 = await as(alice, `insert into public.owners (name) values ('Sneaky')`)
+ok('non-admin cannot add owners', !!own3.e, JSON.stringify(own3))
 const ownName = own1.r?.rows[0]?.name
 const roles = (await db.query(`select email, role from public.profiles order by email`)).rows
 ok('admin email gets admin role, others user', roles.find(r => r.email === 'boss@x.com').role === 'admin' && roles.filter(r => r.role === 'user').length === 2, JSON.stringify(roles))
@@ -117,10 +117,10 @@ const trh = (await db.query(`select field_changed from public.feedback_history w
 ok('audit records the tracking fields', trh.length >= 3, JSON.stringify(trh))
 
 // Config / owners / storage
-const o1 = await as(alice, `select name, email, active from public.owners`)
-ok('user can read only active admin owners', o1.r.rows.length === 1 && o1.r.rows[0].active === true && o1.r.rows[0].email === 'boss@x.com', JSON.stringify(o1))
-const o2 = await as(alice, `insert into public.owners (email) values ('alice@x.com')`)
-ok('user cannot add owners', !!o2.e, JSON.stringify(o2))
+await as(boss, `update public.owners set active=false where name='Priya'`)
+const o1 = await as(alice, `select name, active from public.owners`)
+ok('user reads only active owners', o1.r.rows.length > 0 && o1.r.rows.every((r) => r.active) && !o1.r.rows.some((r) => r.name === 'Priya'), JSON.stringify(o1))
+await as(boss, `update public.owners set active=true where name='Priya'`)
 const c1 = await as(alice, `update public.app_config set value='false'`)
 ok('user cannot change app_config', (c1.r?.affectedRows ?? 0) === 0, JSON.stringify(c1))
 const c2 = await as(alice, `select value from public.app_config where key='screenshot_required'`)

@@ -116,11 +116,11 @@ export function FeedbackForm({ screenshotRequired, dashboardOptions, owners = []
               {FEEDBACK_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
           </FormField>
-          <FormField label="Owner" htmlFor="owner" error={errors.owner?.message} hint="Optional. Only team members with admin access are listed.">
-            <select id="owner" className="field-input sm:max-w-xs" defaultValue="" {...register('owner')}>
-              <option value="">Not sure / unassigned</option>
-              {owners.map((o) => <option key={o}>{o}</option>)}
-            </select>
+          <FormField label="Owner" htmlFor="owner" error={errors.owner?.message} hint="Optional. Type to search the owner list.">
+            <Controller control={control} name="owner" render={({ field }) => (
+              <SearchableSelect id="owner" className="sm:max-w-xs" value={field.value ?? ''} onChange={field.onChange} options={owners}
+                placeholder="Search owner…" emptyLabel="No owners found" />
+            )} />
           </FormField>
           <FormField label="Assign feedback to" htmlFor="assignee" error={errors.assignee?.message} hint="Optional. Type to search the assignee list.">
             <Controller control={control} name="assignee" render={({ field }) => (

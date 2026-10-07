@@ -2,9 +2,6 @@
 alter table public.owners add column if not exists email text;
 create unique index if not exists owners_email_uidx on public.owners (lower(email)) where email is not null;
 
--- Legacy owners (free-text names, not linked to an admin) are hidden from the dropdowns.
-update public.owners set active = false where email is null;
-
 create or replace function public.is_valid_owner(owner_name text)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
