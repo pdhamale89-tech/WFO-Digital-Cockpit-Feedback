@@ -16,7 +16,7 @@ create function storage.foldername(name text) returns text[] language sql as $$ 
 grant usage on schema public, auth, storage to anon, authenticated;
 grant select, insert, delete on storage.objects to authenticated;
 `)
-for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
+for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
 // default Supabase privileges for public schema
 await db.exec(`grant usage on schema public to anon, authenticated; grant usage on sequence public.feedback_number_seq to authenticated;
 grant all on all tables in schema public to authenticated;`)
@@ -109,6 +109,12 @@ const s3 = await as(alice, `insert into storage.objects (bucket_id, name) values
 ok("storage: user cannot upload into another user's folder", !!s3.e, JSON.stringify(s3))
 const s4 = await as(alice, `delete from storage.objects where name='${alice}/a.png' returning 1`)
 ok('storage: user cannot delete a screenshot attached to feedback', (s4.r?.rows.length ?? 0) === 0, JSON.stringify(s4))
+const dopt = await as(alice, 'select name from public.dashboard_options where parent_id is not null')
+ok('users can read seeded CSG dropdown options (7 children)', dopt.r?.rows.length === 7, JSON.stringify(dopt))
+const dins = await as(alice, "insert into public.dashboard_options (business, name) values ('Field','Hack')")
+ok('user cannot add dropdown options', !!dins.e, JSON.stringify(dins))
+const dadm = await as(boss, "insert into public.dashboard_options (business, name) values ('Field','Ops') returning id")
+ok('admin can add dropdown options', dadm.r?.rows.length === 1, dadm.e)
 const bk = (await db.query(`select public from storage.buckets where id='feedback-screenshots'`)).rows[0]
 ok('bucket is private', bk.public === false)
 const anon = await (async () => { await db.exec(`reset role; set role anon`); try { return await db.query(`select * from public.feedback`) } catch (e) { return { e: e.message } } finally { await db.exec('reset role') } })()

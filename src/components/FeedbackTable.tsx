@@ -47,7 +47,7 @@ function loadVisibility(variant: TableVariant): VisibilityState {
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  sr: 'Sr. No.', feedback_number: 'Feedback ID', business: 'Business', card_graph_name: 'Cards / Graph Name', feedback_type: 'Feedback Type',
+  sr: 'Sr. No.', feedback_number: 'Feedback ID', business: 'Business', dashboard_path: 'Dashboard', card_graph_name: 'Cards / Graph Name', feedback_type: 'Feedback Type',
   changes_required: 'Changes Required', screenshot: 'Screenshot', priority: 'Priority', owner: 'Owner', status: 'Status',
   reported_by_name: 'Reported By', date_reported: 'Date Reported', date_completed: 'Date Completed',
 }
@@ -72,6 +72,7 @@ export function FeedbackTable(p: Props) {
         ),
       },
       { id: 'business', header: 'Business', size: 95, ...sortable('business'), cell: (c) => c.row.original.business ?? '—' },
+      { id: 'dashboard_path', header: 'Dashboard', size: 210, ...sortable('dashboard_path'), cell: (c) => <p className="truncate" title={c.row.original.dashboard_path ?? ''}>{c.row.original.dashboard_path ?? '—'}</p> },
       { id: 'feedback_type', header: 'Feedback Type', size: 140, ...sortable('feedback_type'), cell: (c) => c.row.original.feedback_type },
       {
         id: 'changes_required', header: 'Changes Required', size: 340, enableSorting: false,

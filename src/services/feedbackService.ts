@@ -1,13 +1,13 @@
 import { supabase } from '@/lib/supabase'
 import { dayEndIso, dayStartIso } from '@/lib/utils'
 import type {
-  Feedback, FeedbackHistoryEntry, FeedbackQuery, FeedbackStats, Owner, Priority, SortField, Status,
+  Business, DashboardOption, Feedback, FeedbackHistoryEntry, FeedbackQuery, FeedbackStats, Owner, Priority, SortField, Status,
 } from '@/types'
 import type { FeedbackFormValues } from '@/lib/schemas'
 import { removeScreenshot, uploadScreenshot } from './storageService'
 
 const SORTABLE: readonly SortField[] = [
-  'feedback_number', 'business', 'card_graph_name', 'feedback_type', 'priority', 'owner',
+  'feedback_number', 'business', 'dashboard_path', 'card_graph_name', 'feedback_type', 'priority', 'owner',
   'status', 'reported_by_name', 'date_reported', 'date_completed',
 ]
 
@@ -85,6 +85,7 @@ export async function createFeedback(
   values: FeedbackFormValues,
   userId: string,
   onProgress?: (pct: number) => void,
+  dashboardPath: string | null = null,
 ): Promise<{ id: string; feedback_number: string }> {
   let screenshotPath: string | null = null
   if (values.screenshot) screenshotPath = await uploadScreenshot(userId, values.screenshot as File, onProgress)
@@ -94,6 +95,7 @@ export async function createFeedback(
     .from('feedback')
     .insert({
       business: values.business,
+      dashboard_path: dashboardPath,
       component_category: values.component_category,
       card_graph_name: values.card_graph_name.trim(),
       feedback_type: values.feedback_type,
@@ -155,6 +157,32 @@ export async function getStats(): Promise<FeedbackStats> {
   const { data, error } = await supabase.rpc('admin_feedback_stats')
   if (error) throw error
   return data as FeedbackStats
+}
+
+export async function listDashboardOptions(): Promise<DashboardOption[]> {
+  const { data, error } = await supabase.from('dashboard_options').select('*').order('sort_order').order('name')
+  if (error) throw error
+  return (data ?? []) as DashboardOption[]
+}
+
+export async function addDashboardOption(business: Business, parentId: string | null, name: string, sortOrder: number): Promise<void> {
+  const { error } = await supabase.from('dashboard_options').insert({ business, parent_id: parentId, name: name.trim(), sort_order: sortOrder })
+  if (error) throw error
+}
+
+export async function setDashboardOptionActive(id: string, active: boolean): Promise<void> {
+  const { error } = await supabase.from('dashboard_options').update({ active }).eq('id', id)
+  if (error) throw error
+}
+
+export async function renameDashboardOption(id: string, name: string): Promise<void> {
+  const { error } = await supabase.from('dashboard_options').update({ name: name.trim() }).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteDashboardOption(id: string): Promise<void> {
+  const { error } = await supabase.from('dashboard_options').delete().eq('id', id)
+  if (error) throw error
 }
 
 // --- Admin configuration -----------------------------------------------------

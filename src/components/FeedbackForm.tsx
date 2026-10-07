@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2, Send } from 'lucide-react'
@@ -11,31 +11,44 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { FormField, FormSection } from './FormField'
 import { ScreenshotUploader } from './ScreenshotUploader'
+import { DashboardPathSelect } from './DashboardPathSelect'
+import { PATH_SEPARATOR, pathNames } from '@/utils/tree'
+import type { DashboardOption } from '@/types'
 
 const DEFAULTS: Partial<FeedbackFormValues> = {
-  business: undefined, component_category: undefined, card_graph_name: '', feedback_type: undefined,
+  business: undefined, dashboard_ids: [], component_category: undefined, card_graph_name: '', feedback_type: undefined,
   changes_required: '', priority: 'Medium', screenshot: null,
 }
 
-export function FeedbackForm({ screenshotRequired }: { screenshotRequired: boolean }) {
+export function FeedbackForm({ screenshotRequired, dashboardOptions }: { screenshotRequired: boolean; dashboardOptions: DashboardOption[] }) {
   const { profile } = useAuth()
   const { toast } = useToast()
-  const schema = useMemo(() => buildFeedbackSchema(screenshotRequired), [screenshotRequired])
+  const schema = useMemo(() => buildFeedbackSchema(screenshotRequired, dashboardOptions), [screenshotRequired, dashboardOptions])
   const [progress, setProgress] = useState<number | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
 
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FeedbackFormValues>({
+  const { register, handleSubmit, control, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<FeedbackFormValues>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULTS as FeedbackFormValues,
   })
+
+  const business = watch('business')
+  const prevBusiness = useRef(business)
+  useEffect(() => {
+    // Changing the business invalidates the previously chosen dashboard path.
+    if (prevBusiness.current !== business) { setValue('dashboard_ids', []); prevBusiness.current = business }
+  }, [business, setValue])
 
   const onSubmit = handleSubmit(async (values) => {
     if (!profile) return
     setSubmitError(null)
     setProgress(values.screenshot ? 0 : null)
     try {
-      const res = await createFeedback(values, profile.id, setProgress)
+      const res = await createFeedback(
+        values, profile.id, setProgress,
+        values.dashboard_ids.length ? pathNames(dashboardOptions, values.dashboard_ids).join(PATH_SEPARATOR) : null,
+      )
       setDone(res.feedback_number)
       toast('success', `Feedback ${res.feedback_number} submitted successfully.`,
         'Your feedback has been recorded and will be reviewed by the validation/development team.')
@@ -72,6 +85,12 @@ export function FeedbackForm({ screenshotRequired }: { screenshotRequired: boole
               {BUSINESSES.map((b) => <option key={b}>{b}</option>)}
             </select>
           </FormField>
+        </div>
+        <div className="mb-4">
+          <Controller control={control} name="dashboard_ids" render={({ field }) => (
+            <DashboardPathSelect business={business} options={dashboardOptions} value={field.value ?? []} onChange={field.onChange}
+              error={errors.dashboard_ids?.message as string | undefined} />
+          )} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Component type" htmlFor="component_category" required error={errors.component_category?.message}>

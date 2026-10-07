@@ -19,6 +19,7 @@ export interface Feedback {
   id: string
   feedback_number: string
   business: Business | null
+  dashboard_path: string | null
   component_category: ComponentCategory
   card_graph_name: string
   feedback_type: FeedbackType
@@ -75,7 +76,7 @@ export interface FeedbackStats {
 }
 
 export type SortField =
-  | 'feedback_number' | 'business' | 'card_graph_name' | 'feedback_type' | 'priority' | 'owner'
+  | 'feedback_number' | 'business' | 'dashboard_path' | 'card_graph_name' | 'feedback_type' | 'priority' | 'owner'
   | 'status' | 'reported_by_name' | 'date_reported' | 'date_completed'
 
 export interface FeedbackFilters {
@@ -101,4 +102,13 @@ export interface FeedbackQuery extends FeedbackFilters {
 
 export const EMPTY_FILTERS: FeedbackFilters = {
   search: '', status: '', priority: '', owner: '', type: '', business: '', dateFrom: '', dateTo: '',
+}
+
+export interface DashboardOption {
+  id: string
+  business: Business
+  parent_id: string | null
+  name: string
+  active: boolean
+  sort_order: number
 }

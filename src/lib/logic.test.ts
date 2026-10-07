@@ -4,6 +4,7 @@ import { safeCell, toCsv } from '@/utils/export'
 import { sanitizeSearch } from '@/services/feedbackService'
 import { formatDate, formatBytes } from './utils'
 import { toUserMessage } from './errors'
+import { nextLevelOptions } from '@/utils/tree'
 import type { Feedback } from '@/types'
 
 const file = (type: string, size: number) => ({ type, size, name: 'a' }) as File
@@ -21,7 +22,7 @@ describe('validateScreenshot', () => {
 
 describe('feedback schema', () => {
   const valid = {
-    business: 'Remote', component_category: 'KPI Card', card_graph_name: 'Contact Volume Trend', feedback_type: 'Data Issue',
+    business: 'Remote', dashboard_ids: [], component_category: 'KPI Card', card_graph_name: 'Contact Volume Trend', feedback_type: 'Data Issue',
     changes_required: 'Contact count differs from source', priority: 'Medium', screenshot: file('image/png', 5),
   }
   it('requires a screenshot when configured', () => {
@@ -52,5 +53,25 @@ describe('helpers', () => {
   it('never leaks raw database errors', () => {
     expect(toUserMessage({ message: 'duplicate key value violates unique constraint "pg_x"' })).not.toMatch(/duplicate key/)
     expect(toUserMessage({ message: 'new row violates row-level security policy' })).toMatch(/permission/)
+  })
+})
+
+describe('dashboard cascade', () => {
+  const o = (id: string, parent_id: string | null, name: string) => ({ id, business: 'Remote', parent_id, name, active: true, sort_order: 1 }) as import('@/types').DashboardOption
+  const opts = [o('a', null, 'Executive Dashboard'), o('b', null, 'CSG'), o('c', 'b', 'AHT')]
+  const base = {
+    business: 'Remote', component_category: 'Table', card_graph_name: 'AHT card', feedback_type: 'UI Issue',
+    changes_required: 'Decimal formatting wrong', priority: 'Low', screenshot: file('image/png', 5),
+  }
+  it('offers children only for the chosen parent and Remote has no options for other businesses', () => {
+    expect(nextLevelOptions(opts, 'Remote', []).map((x) => x.name)).toEqual(['CSG', 'Executive Dashboard'])
+    expect(nextLevelOptions(opts, 'Remote', ['b']).map((x) => x.name)).toEqual(['AHT'])
+    expect(nextLevelOptions(opts, 'Field', [])).toEqual([])
+  })
+  it('requires drilling down to a leaf', () => {
+    const schema = buildFeedbackSchema(true, opts)
+    expect(schema.safeParse({ ...base, dashboard_ids: ['b'] }).success).toBe(false)
+    expect(schema.safeParse({ ...base, dashboard_ids: ['b', 'c'] }).success).toBe(true)
+    expect(schema.safeParse({ ...base, business: 'Field', dashboard_ids: [] }).success).toBe(true)
   })
 })

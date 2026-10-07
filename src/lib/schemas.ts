@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import type { DashboardOption } from '@/types'
+import { levelLabel, nextLevelOptions } from '@/utils/tree'
 import {
   ACCEPTED_IMAGE_TYPES, BUSINESSES, COMPONENT_CATEGORIES, FEEDBACK_TYPES, MAX_SCREENSHOT_BYTES, PRIORITIES,
 } from './constants'
@@ -12,9 +14,10 @@ export function validateScreenshot(file: File): string | null {
   return null
 }
 
-export function buildFeedbackSchema(screenshotRequired: boolean) {
+export function buildFeedbackSchema(screenshotRequired: boolean, options: DashboardOption[] = []) {
   return z.object({
     business: z.enum(BUSINESSES, { errorMap: () => ({ message: 'Select a business.' }) }),
+    dashboard_ids: z.array(z.string()),
     component_category: z.enum(COMPONENT_CATEGORIES, { errorMap: () => ({ message: 'Select a component type.' }) }),
     card_graph_name: z.string().trim().min(2, 'Enter the component name.').max(200, 'Keep it under 200 characters.'),
     feedback_type: z.enum(FEEDBACK_TYPES, { errorMap: () => ({ message: 'Select a feedback type.' }) }),
@@ -28,6 +31,11 @@ export function buildFeedbackSchema(screenshotRequired: boolean) {
       const err = validateScreenshot(file as File)
       if (err) ctx.addIssue({ code: 'custom', message: err })
     }),
+  }).superRefine((v, ctx) => {
+    // Keep drilling until a leaf of the admin-configured Business > Dashboard tree is chosen.
+    if (nextLevelOptions(options, v.business, v.dashboard_ids).length > 0) {
+      ctx.addIssue({ code: 'custom', path: ['dashboard_ids'], message: `Select a ${levelLabel(v.dashboard_ids.length).toLowerCase()}.` })
+    }
   })
 }
 

@@ -158,6 +158,7 @@ function DrawerBody({ id, mode, owners, onClose, onChanged }: { id: string; mode
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={fb.status} />
               <PriorityBadge priority={fb.priority} />
+              {fb.dashboard_path && <span className="w-full text-xs font-medium">{fb.dashboard_path}</span>}
               <span className="text-xs text-subtle">{fb.business ? `${fb.business} · ` : ''}{fb.component_category} · {fb.feedback_type}</span>
             </div>
 

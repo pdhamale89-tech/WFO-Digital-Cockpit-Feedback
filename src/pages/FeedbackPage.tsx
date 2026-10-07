@@ -1,10 +1,10 @@
 import { FeedbackForm } from '@/components/FeedbackForm'
 import { ErrorState, LoadingState } from '@/components/States'
 import { useAsync } from '@/hooks/useAsync'
-import { getScreenshotRequired } from '@/services/feedbackService'
+import { getScreenshotRequired, listDashboardOptions } from '@/services/feedbackService'
 
 export function FeedbackPage() {
-  const cfg = useAsync(getScreenshotRequired, [])
+  const cfg = useAsync(async () => ({ required: await getScreenshotRequired(), options: await listDashboardOptions() }), [])
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-5 rounded-xl border border-border bg-brand-soft p-5">
@@ -16,7 +16,7 @@ export function FeedbackPage() {
       </div>
       {cfg.loading ? <LoadingState variant="table" rows={5} />
         : cfg.error ? <ErrorState message={cfg.error} onRetry={cfg.reload} />
-        : <FeedbackForm screenshotRequired={cfg.data ?? true} />}
+        : <FeedbackForm screenshotRequired={cfg.data?.required ?? true} dashboardOptions={cfg.data?.options ?? []} />}
     </div>
   )
 }

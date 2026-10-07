@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { DashboardOptionsCard } from '@/components/DashboardOptionsCard'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorState, LoadingState } from '@/components/States'
 import { useAsync } from '@/hooks/useAsync'
@@ -156,7 +157,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-4">
       <PageHeader title={isAdmin ? 'Settings' : 'Profile'} subtitle={isAdmin ? 'Portal configuration and your profile.' : 'Your account details.'} />
       <ProfileCard />
-      {isAdmin && <><ScreenshotCard /><OwnersCard /><AdminsCard /></>}
+      {isAdmin && <><ScreenshotCard /><DashboardOptionsCard /><OwnersCard /><AdminsCard /></>}
     </div>
   )
 }
