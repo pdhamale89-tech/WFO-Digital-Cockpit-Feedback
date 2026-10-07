@@ -99,7 +99,7 @@ export function DashboardOptionsCard() {
     <section className="card p-5" aria-labelledby="s-dash">
       <h2 id="s-dash" className="text-sm font-semibold">Business dropdowns</h2>
       <p className="mb-3 text-subtle">
-        Configure the cascading dropdowns shown under Business on the feedback form (Dashboard → Section → Sub-section).
+        Configure the cascading dropdowns shown under Business on the feedback form (Sub business → Dashboard → Section).
         Deactivate to hide an option without losing history.
       </p>
       <div className="mb-3 flex flex-wrap gap-1" role="tablist" aria-label="Business">
@@ -109,8 +109,8 @@ export function DashboardOptionsCard() {
       </div>
       <form className="mb-3 flex gap-2 sm:max-w-md"
         onSubmit={async (e) => { e.preventDefault(); if (rootName.trim() && await run(() => addDashboardOption(business, null, rootName, nextOrder(null, business)), 'Option added')) setRootName('') }}>
-        <label htmlFor="d-root" className="sr-only">New dashboard under {business}</label>
-        <input id="d-root" className="field-input" placeholder={`Add dashboard under ${business}`} value={rootName} maxLength={80} onChange={(e) => setRootName(e.target.value)} />
+        <label htmlFor="d-root" className="sr-only">New sub business under {business}</label>
+        <input id="d-root" className="field-input" placeholder={`Add sub business under ${business}`} value={rootName} maxLength={80} onChange={(e) => setRootName(e.target.value)} />
         <button className="btn-primary" disabled={busy || !rootName.trim()}><Plus className="h-4 w-4" /> Add</button>
       </form>
       {opts.loading && !opts.data ? <LoadingState variant="table" rows={4} />

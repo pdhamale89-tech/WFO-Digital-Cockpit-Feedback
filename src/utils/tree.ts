@@ -1,6 +1,6 @@
 import type { Business, DashboardOption } from '@/types'
 
-export const LEVEL_LABELS = ['Dashboard', 'Section', 'Sub-section']
+export const LEVEL_LABELS = ['Sub business', 'Dashboard', 'Section']
 export const levelLabel = (level: number) => LEVEL_LABELS[Math.min(level, LEVEL_LABELS.length - 1)]
 
 const byOrder = (a: DashboardOption, b: DashboardOption) => a.sort_order - b.sort_order || a.name.localeCompare(b.name)
