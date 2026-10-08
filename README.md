@@ -49,6 +49,7 @@ npm run lint && npm test && npm run test:db && npm run build
    - `supabase/migrations/004_dashboard_options.sql` – Business dropdown tree
    - `supabase/migrations/005_owner_admins.sql` – Owner dropdown on the form (admin-only rule later relaxed by 008)
    - `supabase/migrations/008_owners_freeform.sql` – owners are plain names, like assignees
+   - `supabase/migrations/009_user_status.sql` – reporters can move their own feedback along the status workflow
    - `supabase/migrations/006_tracking_fields.sql` – Sub owner, ETA, Challenges columns (admin-edited)
    - `supabase/migrations/007_assignees.sql` – assignee list for the searchable "Assign feedback to" dropdown (stored as Sub Owner Name)
 3. Authentication → Providers: enable Email. Decide whether to require email confirmation. If you do not want self sign-up, disable "Allow new users to sign up" and create users in the dashboard.
@@ -68,7 +69,7 @@ npm run lint && npm test && npm run test:db && npm run build
 
 ### Row Level Security (summary)
 
-- Users: `INSERT` own feedback; `SELECT` own feedback; may update **only** `user_comments` on own rows (trigger enforced). No delete.
+- Users: `INSERT` own feedback; `SELECT` own feedback; may update only `user_comments` and the `status` (valid workflow transitions only) on own rows (trigger enforced). No delete.
 - Admins (`profiles.role = 'admin'` via `is_admin()`): select/update/delete everything, read history/owners/config.
 - Triggers force `reported_by`, name/email, `status='New'`, dates on insert; make `feedback_number`, reporter and `date_reported` immutable; set `date_completed` when status becomes Completed (kept on reopening — history records every change); write `feedback_history`.
 - `profiles.role` is not client-writable (column-level grants). Anon has no access.

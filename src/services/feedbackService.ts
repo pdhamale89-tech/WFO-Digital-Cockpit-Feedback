@@ -142,6 +142,13 @@ export async function addUserComment(id: string, comment: string): Promise<Feedb
   return data as Feedback
 }
 
+/** Reporters may move their own feedback along the allowed workflow (enforced by the database). */
+export async function updateOwnStatus(id: string, status: Status): Promise<Feedback> {
+  const { data, error } = await supabase.from('feedback').update({ status }).eq('id', id).select('*').single()
+  if (error) throw error
+  return data as Feedback
+}
+
 export async function deleteFeedback(row: Pick<Feedback, 'id' | 'screenshot_path'>): Promise<void> {
   const { error } = await supabase.from('feedback').delete().eq('id', row.id)
   if (error) throw error

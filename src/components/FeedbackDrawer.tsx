@@ -6,7 +6,7 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 import { useAsync } from '@/hooks/useAsync'
 import { useToast } from '@/hooks/useToast'
 import {
-  addUserComment, deleteFeedback, getFeedback, getHistory, updateFeedback, type AdminUpdate,
+  addUserComment, deleteFeedback, updateOwnStatus, getFeedback, getHistory, updateFeedback, type AdminUpdate,
 } from '@/services/feedbackService'
 import type { Feedback, FeedbackType, Priority, Status } from '@/types'
 import { AuditTimeline } from './AuditTimeline'
@@ -109,6 +109,20 @@ function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: s
     }
     if (Object.keys(patch).length === 0) { toast('info', 'No changes to save'); return }
     void apply(patch, 'Changes saved')
+  }
+
+  const [userStatus, setUserStatus] = useState<Status>('New')
+  useEffect(() => { if (fb) setUserStatus(fb.status) }, [fb])
+  const saveUserStatus = async () => {
+    if (!fb) return
+    setSaving(true)
+    try {
+      hydrate(await updateOwnStatus(fb.id, userStatus))
+      onChanged()
+      toast('success', 'Status updated')
+    } catch (e) {
+      toast('error', 'Could not update the status', toUserMessage(e, 'That status is not a valid next step.'))
+    } finally { setSaving(false) }
   }
 
   const saveUserComment = async () => {
@@ -270,6 +284,16 @@ function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: s
                 <Row label="Comments from the team">{fb.admin_comments || <span className="text-subtle">No comments yet.</span>}</Row>
                 <Row label="Challenges">{fb.challenges || <span className="text-subtle">None noted.</span>}</Row>
                 <Row label="Resolution">{fb.resolution || <span className="text-subtle">Not yet resolved.</span>}</Row>
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <FormField label="Update status" htmlFor="u-status" hint="Only valid next steps are listed.">
+                    <select id="u-status" className="field-input" value={userStatus} onChange={(e) => setUserStatus(e.target.value as Status)}>
+                      {statusOptions.map((st) => <option key={st}>{st}</option>)}
+                    </select>
+                  </FormField>
+                  <button className="btn-primary" onClick={saveUserStatus} disabled={saving || userStatus === fb.status}>
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} Update status
+                  </button>
+                </div>
                 <FormField label="Add a follow-up comment" htmlFor="u-comment" hint="Shared with the validation/development team.">
                   <textarea id="u-comment" rows={3} className="field-input" maxLength={2000} value={userComment} onChange={(e) => setUserComment(e.target.value)} />
                 </FormField>

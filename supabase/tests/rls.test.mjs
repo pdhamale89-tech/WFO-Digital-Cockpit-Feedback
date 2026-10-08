@@ -16,7 +16,7 @@ create function storage.foldername(name text) returns text[] language sql as $$ 
 grant usage on schema public, auth, storage to anon, authenticated;
 grant select, insert, delete on storage.objects to authenticated;
 `)
-for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql', '006_tracking_fields.sql', '007_assignees.sql', '008_owners_freeform.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
+for (const f of ['001_schema.sql', '002_rls.sql', '003_storage.sql', '004_dashboard_options.sql', '005_owner_admins.sql', '006_tracking_fields.sql', '007_assignees.sql', '008_owners_freeform.sql', '009_user_status.sql']) await db.exec(readFileSync(new URL('migrations/' + f, dir), 'utf8'))
 // default Supabase privileges for public schema
 await db.exec(`grant usage on schema public to anon, authenticated; grant usage on sequence public.feedback_number_seq to authenticated;
 grant all on all tables in schema public to authenticated;`)
@@ -115,6 +115,19 @@ const tr3 = await as(boss, `update public.feedback set sub_owner='Meera', eta='2
 ok('admin can set sub owner / ETA / challenges', tr3.r?.rows.length === 1, tr3.e)
 const trh = (await db.query(`select field_changed from public.feedback_history where field_changed in ('eta','sub_owner','challenges')`)).rows
 ok('audit records the tracking fields', trh.length >= 3, JSON.stringify(trh))
+
+const us1 = await as(alice, `update public.feedback set status='Under Review' where feedback_number='WF-0001' returning status`)
+ok('user can move own feedback along a valid transition', us1.r?.rows[0]?.status === 'Under Review', JSON.stringify(us1))
+const us2 = await as(alice, `update public.feedback set status='Blocked' where feedback_number='WF-0001' returning status`)
+ok('user cannot make an invalid status jump', !!us2.e, JSON.stringify(us2))
+const us3 = await as(bob, `update public.feedback set status='Rejected' where feedback_number='WF-0001' returning status`)
+ok('user cannot change status of someone else', (us3.r?.rows.length ?? 0) === 0, JSON.stringify(us3))
+const us4 = await as(alice, `update public.feedback set status='In Progress', priority='Low' where feedback_number='WF-0001' returning status`)
+ok('user still cannot change priority alongside status', !!us4.e, JSON.stringify(us4))
+const us5 = await as(alice, `update public.feedback set status='Completed' where feedback_number='WF-0001' returning date_completed`)
+ok('completing sets date_completed server-side', !us5.e && us5.r?.rows[0]?.date_completed != null, JSON.stringify(us5))
+const ush = (await db.query(`select changed_by from public.feedback_history where field_changed='status' order by changed_at desc limit 1`)).rows[0]
+ok('status change by user is audited with their id', ush?.changed_by === alice, JSON.stringify(ush))
 
 // Config / owners / storage
 await as(boss, `update public.owners set active=false where name='Priya'`)
