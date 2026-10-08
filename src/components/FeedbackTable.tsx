@@ -33,11 +33,11 @@ interface Props {
   emptyDescription?: string
 }
 
-const STORAGE_KEY = 'feedback-columns-v3'
+const STORAGE_KEY = 'feedback-columns-v4'
 // Default view: Sr.No, Validated by, Stream, Feature, Page Name, Component type, Owner, Sub Owner, Comments, Status, ETA, Challenges, Attachment.
 const EXTRA_HIDDEN: VisibilityState = { feedback_number: false, feedback_type: false, priority: false, date_reported: false, date_completed: false }
 const ADMIN_DEFAULT_HIDDEN: VisibilityState = EXTRA_HIDDEN
-const USER_HIDDEN: VisibilityState = { ...EXTRA_HIDDEN, owner: false, sub_owner: false, challenges: false, reported_by_name: false, sr: false, feedback_number: true, priority: true }
+const USER_HIDDEN: VisibilityState = EXTRA_HIDDEN
 
 function loadVisibility(variant: TableVariant): VisibilityState {
   if (variant === 'user') return USER_HIDDEN
@@ -207,7 +207,9 @@ export function FeedbackTable(p: Props) {
               <p className="line-clamp-2 text-subtle">{r.changes_required}</p>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                 <div><dt className="text-subtle">Priority</dt><dd><PriorityBadge priority={r.priority} /></dd></div>
-                {p.variant === 'admin' && <div><dt className="text-subtle">Owner</dt><dd className="font-medium">{r.owner ?? 'Unassigned'}</dd></div>}
+                <div><dt className="text-subtle">Owner</dt><dd className="font-medium">{r.owner ?? 'Unassigned'}</dd></div>
+                <div><dt className="text-subtle">Sub owner</dt><dd className="font-medium">{r.sub_owner ?? '—'}</dd></div>
+                <div><dt className="text-subtle">ETA</dt><dd className="font-medium">{r.eta ? formatDate(`${r.eta}T00:00:00`) : '—'}</dd></div>
                 <div><dt className="text-subtle">Date</dt><dd className="font-medium">{formatDate(r.date_reported)}</dd></div>
                 {r.status === 'Completed' && <div><dt className="text-subtle">Completed</dt><dd className="font-medium">{formatDate(r.date_completed)}</dd></div>}
               </dl>

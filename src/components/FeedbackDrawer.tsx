@@ -205,6 +205,7 @@ function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: s
             <dl className="grid grid-cols-2 gap-4 border-y border-border py-4">
               <Row label="Reported by">{fb.reported_by_name}<br /><span className="text-xs text-subtle">{fb.reported_by_email}</span></Row>
               <Row label="Owner">{fb.owner ?? <span className="text-subtle">Unassigned</span>}</Row>
+              <Row label="Sub owner">{fb.sub_owner ?? <span className="text-subtle">—</span>}</Row>
               <Row label="ETA">{fb.eta ? formatDate(`${fb.eta}T00:00:00`) : '—'}</Row>
               <Row label="Date reported">{formatDateTime(fb.date_reported)}</Row>
               <Row label="Date completed">{fb.status === 'Completed' ? formatDateTime(fb.date_completed) : '—'}</Row>
@@ -267,6 +268,7 @@ function DrawerBody({ id, mode, owners, assignees, onClose, onChanged }: { id: s
             ) : (
               <section className="space-y-4" aria-label="Team response">
                 <Row label="Comments from the team">{fb.admin_comments || <span className="text-subtle">No comments yet.</span>}</Row>
+                <Row label="Challenges">{fb.challenges || <span className="text-subtle">None noted.</span>}</Row>
                 <Row label="Resolution">{fb.resolution || <span className="text-subtle">Not yet resolved.</span>}</Row>
                 <FormField label="Add a follow-up comment" htmlFor="u-comment" hint="Shared with the validation/development team.">
                   <textarea id="u-comment" rows={3} className="field-input" maxLength={2000} value={userComment} onChange={(e) => setUserComment(e.target.value)} />
